@@ -558,23 +558,22 @@ def get_samples_v1(df, item_info_df, time_interval_thr):
     :param df:
     :return:
     '''
-    df = df[~df['train_or_test'] == 'predict']
+    df = df[df['train_or_test'] != 'predict']
     user_set = set(df['user_id'])
     positive_sample_list = []
     for user in user_set:
         user_df = df[df['user_id'] == user]
         user_df = user_df.sort_values(['time'], ascending=False).reset_index()
-        user_df['time_interval'] = np.array(list(user_df['time']))[:-1] - np.array(list(user_df['time']))[1:] + [np.inf]
+        user_df['time_interval'] = list(np.array(list(user_df['time']))[:-1] - np.array(list(user_df['time']))[1:]) + [np.inf]
 
         s = e = 0
         for i in range(user_df.shape[0]):
             if user_df.loc[i, 'time_interval'] <= time_interval_thr:
                 e += 1
             else:
-                if e - s <= 1:
-                    s = e = i + 1
-                else:
+                if e - s >= 2:
                     positive_sample_list.append([user] + list(user_df.loc[s: e+1, 'item_id']))
+                s = e = i + 1
 
     print(len(positive_sample_list))
 

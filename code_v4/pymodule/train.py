@@ -41,7 +41,7 @@ flag_test = False
 recall_num = 500
 topk = 50
 nrows = None
-subsampling = 10
+subsampling = 3
 ''' 特征是否已经缓存 '''
 is_cached_features = False
 ''' 打开：缓存特征 '''
