@@ -1,4 +1,5 @@
 import os
+from tqdm import tqdm
 
 import pandas as pd
 import numpy as np
@@ -98,7 +99,7 @@ def del_qtime_future_click(df):
     qtime_user_set = set(df[df['train_or_test'] == 'predict']['user_id'])
 
     result_df = df[~df['user_id'].isin(qtime_user_set)]
-    for qtime_user in qtime_user_set:
+    for qtime_user in tqdm(qtime_user_set):
         tmp = df[df['user_id'] == qtime_user]
         tmp = tmp[tmp['time'] <= tmp[tmp['train_or_test'] == 'predict']['time'].iloc[0]]
 
@@ -114,3 +115,29 @@ def del_dup(df):
 def process_time(df, time_stamp):
     df.loc[:, 'time'] = df['time'] * time_stamp
     return df
+
+def transfer_item_features_df2dict(item_features, dim):
+    txt_vec = item_features.apply(lambda x: np.array(list(x.iloc[-dim-dim: -dim])).reshape(-1, ), axis=1)
+    img_vec = item_features.apply(lambda x: np.array(list(x.iloc[-dim: ])).reshape(-1, ), axis=1)
+    user_key = item_features['item_id']
+
+    assert len(user_key) == len(txt_vec) and len(user_key) == len(img_vec)
+
+    user_features_dict = {}
+    user_features_dict['txt_vec'] = dict(zip(user_key, txt_vec))
+    user_features_dict['img_vec'] = dict(zip(user_key, img_vec))
+
+    return user_features_dict
+
+def transfer_user_features_df2dict(user_features, dim):
+    txt_vec = user_features.apply(lambda x: np.array(list(x.iloc[-dim-dim: -dim])).reshape(-1, ), axis=1)
+    img_vec = user_features.apply(lambda x: np.array(list(x.iloc[-dim: ])).reshape(-1, ), axis=1)
+    user_key = user_features['user_id']
+
+    assert len(user_key) == len(txt_vec) and len(user_key) == len(img_vec)
+
+    user_features_dict = {}
+    user_features_dict['txt_vec'] = dict(zip(user_key, txt_vec))
+    user_features_dict['img_vec'] = dict(zip(user_key, img_vec))
+
+    return user_features_dict

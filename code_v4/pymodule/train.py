@@ -121,32 +121,6 @@ def get_answer(phase, user_item_dict, hot_df):
     phase_answer = phase_answer[['phase_id', 'user_id', 'item_id', 'item_deg']]
     return phase_answer
 
-def transfer_user_features_df2dict(user_features, dim):
-    txt_vec = user_features.apply(lambda x: np.array(list(x.iloc[-dim-dim: -dim])).reshape(-1, ), axis=1)
-    img_vec = user_features.apply(lambda x: np.array(list(x.iloc[-dim: ])).reshape(-1, ), axis=1)
-    user_key = user_features['user_id']
-
-    assert len(user_key) == len(txt_vec) and len(user_key) == len(img_vec)
-
-    user_features_dict = {}
-    user_features_dict['txt_vec'] = dict(zip(user_key, txt_vec))
-    user_features_dict['img_vec'] = dict(zip(user_key, img_vec))
-
-    return user_features_dict
-
-def transfer_item_features_df2dict(item_features, dim):
-    txt_vec = item_features.apply(lambda x: np.array(list(x.iloc[-dim-dim: -dim])).reshape(-1, ), axis=1)
-    img_vec = item_features.apply(lambda x: np.array(list(x.iloc[-dim: ])).reshape(-1, ), axis=1)
-    user_key = item_features['item_id']
-
-    assert len(user_key) == len(txt_vec) and len(user_key) == len(img_vec)
-
-    user_features_dict = {}
-    user_features_dict['txt_vec'] = dict(zip(user_key, txt_vec))
-    user_features_dict['img_vec'] = dict(zip(user_key, img_vec))
-
-    return user_features_dict
-
 
 def read_features(phase, is_open_train_recall):
     train_data = pd.read_csv(
@@ -308,8 +282,8 @@ def do_featuring(
         0 == len(total_set_user.difference(set(click_df['user_id'])))
     )
     user_features = get_user_features(click_df, item_info_df, item_txt_embedding_dim, item_img_embedding_dim)
-    user_features_dict = transfer_user_features_df2dict(user_features, item_txt_embedding_dim)
-    item_features_dict = transfer_item_features_df2dict(item_info_df, item_txt_embedding_dim)
+    user_features_dict = utils.transfer_user_features_df2dict(user_features, item_txt_embedding_dim)
+    item_features_dict = utils.transfer_item_features_df2dict(item_info_df, item_txt_embedding_dim)
 
     assert item_txt_embedding_dim == item_img_embedding_dim
     # 每计算好一个数据集就缓存下来
@@ -760,7 +734,7 @@ if __name__ == '__main__':
     all_phase_click = all_phase_click.sort_values(['user_id', 'time']).reset_index(drop=True)
 
 
-    sample_df = get_samples_v1(all_phase_click_666, item_info_df, 280)
+    sample_df = get_samples_v1(all_phase_click_666, item_info_df, 280, 5, item_txt_embedding_dim, process_num)
 
     # submit_all = pd.DataFrame()
     # # one_phase_click = pd.DataFrame()

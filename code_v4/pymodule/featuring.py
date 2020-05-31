@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from gensim import models
 
-from pymodule import constant
+from pymodule import constant, utils
 
 def matrix_word2vec_embedding(click_all, flag, mode, threshold=0, dim=100, epochs=30, learning_rate=0.5):
     """
@@ -550,7 +550,7 @@ def process_after_featuring(train_data, valid_data, train_user_recall_df=None, t
     return train_data, valid_data, test_user_recall_df
 
 
-def get_samples_v1(df, item_info_df, time_interval_thr):
+def get_samples_v1(df, item_info_df, time_interval_thr, negative_num, dim, process_num):
     '''
     第一版样本如下：
     1. 最近一个session构建user_feature（一个session 280以内）
@@ -559,6 +559,7 @@ def get_samples_v1(df, item_info_df, time_interval_thr):
     :param df:
     :return:
     '''
+    # 正样本构建
     df = df[df['train_or_test'] != 'predict']
     user_set = set(df['user_id'])
     print(len(user_set))
@@ -570,23 +571,93 @@ def get_samples_v1(df, item_info_df, time_interval_thr):
 
         s = e = 0
         one_user_sample = 0
-        print(one_user_sample)
         for i in range(user_df.shape[0]):
             if user_df.loc[i, 'time_interval'] <= time_interval_thr:
                 e += 1
             else:
-                if e - s >= 2:
+                if e - s >= 3:
                     positive_sample_list.append([user] + list(user_df.loc[s: e, 'item_id']))
                     one_user_sample += 1
                 s = e = i + 1
 
+    # 对于每个待预测的user， 需要以其最近一次点击来构建一个正样本 -- 虽然不知道是否有用
+    qtime_user_set = set(df[df['train_or_test'] == 'predict']['user_id'])
+    for user in tqdm(qtime_user_set):
+        user_df = df[df['user_id'] == user]
+        positive_sample_list.append([user] + list(user_df.loc[0: 4, 'item_id']))
+
     print(len(positive_sample_list))
 
-    for positive_sample in positive_sample_list:
-        user = positive_sample[0]
-        tmp = df[df['user_id'] == user]
+    # 负采样
+    negative_sample_dict = {}
+    one_user_tmp = None
+    for i in tqdm(range(len(positive_sample_list))):
+        user = positive_sample_list[i][0]
+        if one_user_tmp is None or user not in one_user_tmp.keys():
+            one_user_tmp = df[~df['item_id'].isin(df[df['user_id'] == user]['item_id'])]
+
+        negative_tmp = one_user_tmp.sample(n=negative_num, random_state=1, axis=0)
+        # negative_sample_list.append([user] + list(negative_tmp['item_id']))
+        negative_sample_dict[i] = list(negative_tmp['item_id'])
 
 
+    # positive_sample_list.extend(negative_sample_list)
+    # 正负样本df构建 并 缓存
+    item_info_dict = utils.transfer_item_features_df2dict(item_info_df, dim)
+
+    pool = multiprocessing.Pool(processes=process_num)
+    process_result = []
+    for i in range(process_num):
+        sample_len = len(positive_sample_list)
+        step = sample_len // process_num
+        if i + 1 != process_num:
+            input_data = positive_sample_list[i * step: (i + 1) * step]
+        else:
+            input_data = positive_sample_list[i * step: ]
+        process_result.append(
+            pool.apply_async(make_samples, (i * step, input_data, item_info_dict, negative_sample_dict, ))
+        )
+
+    pool.close()
+    pool.join()
+    result_pd = pd.DataFrame()
+    for res in process_result:
+        result_pd = result_pd.append(res.get())
+
+    return result_pd
+
+
+def make_samples(start_index, sample_list, item_info_dict, negative_sample_dict):
+    sample_df = pd.DataFrame()
+    for i in range(len(sample_list)):
+        user = sample_list[i][0]
+        item = sample_list[i][1]
+        user_txt_embedding = np.nansum([item_info_dict['txt_vec'].get(j) for j in sample_list[i][2: ]], axis=0)
+        user_img_embedding = np.nansum([item_info_dict['img_vec'].get(j) for j in sample_list[i][2: ]], axis=0)
+        print('embedding', user_txt_embedding)
+
+        one_user_df = [[
+            user, item,
+            user_txt_embedding, user_img_embedding,
+            item_info_dict['txt_vec'].get(item),
+            item_info_dict['img_vec'].get(item)
+        ]]
+
+        for negative_item in negative_sample_dict[start_index + i]:
+            one_user_df.append(
+                [
+                    user, negative_item,
+                    user_txt_embedding, user_img_embedding,
+                    item_info_dict['txt_vec'].get(negative_item),
+                    item_info_dict['img_vec'].get(negative_item)
+                ]
+            )
+
+        sample_df = sample_df.append(one_user_df)
+
+    sample_df.columns = ['user_id', 'item_id', 'user_txt_vec', 'user_img_vec', 'item_txt_vec', 'item_img_vec']
+    print(sample_df)
+    return sample_df
 
 
 if __name__ == '__main__':
