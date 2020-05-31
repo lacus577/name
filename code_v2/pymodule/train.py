@@ -27,8 +27,8 @@ warnings.filterwarnings("ignore")
 process_num = 3
 
 now_phase = 6
-train_path = '../../data/underexpose_train'
-test_path = '../../data/underexpose_test'
+train_path = '../../../../data/underexpose_train'
+test_path = '../../../../data/underexpose_test'
 temp_result_path = './cache/tmp_phase_submit'
 
 ''' 全局变量 '''
@@ -294,281 +294,281 @@ def do_featuring(
     # train_user_recall_df.loc[train_user_recall_df['itemcf_score'] < 0, 'itemcf_score'] = 0
     # test_user_recall_df.loc[test_user_recall_df['itemcf_score'] < 0, 'itemcf_score'] = 0
 
-    # '''
-    # 官方特征:
-    # 1. user和item之间txt相似度
-    # 2. user和item之间img相似度
-    # '''
-    # time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-    # print('官方特征 start time:{}'.format(time_str))
-    # # 注意，此处click_df中user_id必须包含上述四个集合user
-    # total_set_user = set(train_data['user_id']).union(set(valid_data['user_id'])).union(set(train_user_recall_df['user_id'])).union(set(test_user_recall_df['user_id']))
-    # assert (
-    #     0 == len(set(click_df['user_id']).difference(total_set_user)) and
-    #     0 == len(total_set_user.difference(set(click_df['user_id'])))
-    # )
-    # user_features = get_user_features(click_df, item_info_df, item_txt_embedding_dim, item_img_embedding_dim)
-    # user_features_dict = transfer_user_features_df2dict(user_features, item_txt_embedding_dim)
-    # item_features_dict = transfer_item_features_df2dict(item_info_df, item_txt_embedding_dim)
-    #
-    # assert item_txt_embedding_dim == item_img_embedding_dim
-    # # 每计算好一个数据集就缓存下来
-    # train_data = cal_txt_img_sim(train_data, user_features_dict, item_features_dict, item_img_embedding_dim, process_num)
-    # if is_caching_features:
-    #     print('正在缓存train_data')
-    #     train_data.to_csv('./cache/features_cache/part1_train_features_phase_{}.csv'.format(phase), index=False)
-    # print(train_data)
-    #
-    # valid_data = cal_txt_img_sim(valid_data, user_features_dict, item_features_dict, item_img_embedding_dim, process_num)
-    # if is_caching_features:
-    #     print('正在缓存valid_data')
-    #     valid_data.to_csv('./cache/features_cache/part1_valid_features_phase_{}.csv'.format(phase), index=False)
-    #
-    # if is_open_train_recall:
-    #     train_user_recall_df = cal_txt_img_sim(train_user_recall_df, user_features_dict, item_features_dict, item_img_embedding_dim, process_num)
-    #     if is_caching_features:
-    #         print('正在缓存train_user_recall_df')
-    #         train_user_recall_df.to_csv(
-    #             './cache/features_cache/part1_train_user_recall_features_phase_{}.csv'.format(phase), index=False
-    #         )
-    #
-    # test_user_recall_df = cal_txt_img_sim(test_user_recall_df, user_features_dict, item_features_dict, item_img_embedding_dim, process_num)
-    # if is_caching_features:
-    #     print('正在缓存test_user_recall_df')
-    #     test_user_recall_df.to_csv(
-    #         './cache/features_cache/part1_test_user_recall_features_phase_{}.csv'.format(phase), index=False
-    #     )
-    #
-    #
-    # '''
-    # 点击序：
-    # 1. 纯item序列  -- 砍掉
-    # 2. item序列和对应user  -- 砍掉
-    # 3. 纯user序列  -- 砍掉
-    # 4. user序列和共同item  -- 砍掉
-    # 5. 2 带来的user和item相似度
-    # 6. 4 带来的user和item相似度
-    # '''
-    # time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-    # print('点击序embedding特征 start time:{}'.format(time_str))
-    # dict_embedding_all_ui_item, dict_embedding_all_ui_user = click_embedding(click_df, item_img_embedding_dim)
-    # train_data = cal_click_sim(
-    #     train_data, dict_embedding_all_ui_item, dict_embedding_all_ui_user, process_num
-    # )
-    # if is_caching_features:
-    #     print('正在缓存train_data')
-    #     train_data.to_csv('./cache/features_cache/part1_train_features_phase_{}.csv'.format(phase), index=False)
-    #
-    # valid_data = cal_click_sim(
-    #     valid_data, dict_embedding_all_ui_item, dict_embedding_all_ui_user, process_num
-    # )
-    # if is_caching_features:
-    #     print('正在缓存valid_data')
-    #     valid_data.to_csv('./cache/features_cache/part1_valid_features_phase_{}.csv'.format(phase), index=False)
-    #
-    # if is_open_train_recall:
-    #     train_user_recall_df = cal_click_sim(
-    #         train_user_recall_df, dict_embedding_all_ui_item, dict_embedding_all_ui_user, process_num
-    #     )
-    #     if is_caching_features:
-    #         print('正在缓存train_user_recall_df')
-    #         train_user_recall_df.to_csv(
-    #             './cache/features_cache/part1_train_user_recall_features_phase_{}.csv'.format(phase), index=False
-    #         )
-    #
-    # test_user_recall_df = cal_click_sim(
-    #     test_user_recall_df, dict_embedding_all_ui_item, dict_embedding_all_ui_user, process_num
-    # )
-    # if is_caching_features:
-    #     print('正在缓存test_user_recall_df')
-    #     test_user_recall_df.to_csv(
-    #         './cache/features_cache/part1_test_user_recall_features_phase_{}.csv'.format(phase), index=False
-    #     )
-    # print(train_data.columns)
-    # print(train_data.iloc[:5, :])
-    # print(valid_data.iloc[:5, :])
-    # print(train_user_recall_df.iloc[:5, :])
-    # print(test_user_recall_df.iloc[:5, :])
-
     '''
-    统计特征:
-    一阶特征：
-        user点击序中user点击次数（即 点击深度 TODO 去做个统计：点击深度和冷门物品偏好的关系） -- 全量数据集统计
-        user点击序中item平均热度、最大热度、最小热度 -- 先不分train和test即使用全量数据集统计，调优的时候再分
-        user平均点击间隔、最大点击间隔、最小点击间隔 -- 需要分train和test两个集合统计
-        本item在全局的热度：先使用全量数据集统计，调优的时候分在train、test、item-feature中的热度
-    二阶特征（样本中user和item交互）：
-        样本中user和item的距离--如果item在user点击序中则根据时间排序当做距离，否则设为最大距离（最近一个点击距离0）
-        ? 用户热度--用户点击序中所有item热度和
+    官方特征:
+    1. user和item之间txt相似度
+    2. user和item之间img相似度
     '''
     time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-    print('统计特征 start time:{}'.format(time_str))
-
-    click_df = click_df.sort_values(['user_id', 'time'], ascending=False).reset_index(drop=True)
-
-    ''' user点击序中user点击次数（即 点击深度 TODO 去做个统计：点击深度和冷门物品偏好的关系） -- 全量数据集统计 '''
-    user_click_num_df = click_df.groupby('user_id')['item_id'].count().reset_index()
-    user_click_num_df.columns = ['user_id', 'user_click_num']
-    user_click_dict = utils.two_columns_df2dict(user_click_num_df)
-
-    train_data['user_click_num'] = train_data.apply(
-        lambda x: user_click_dict[x['user_id']] if user_click_dict.get(x['user_id']) else 0, axis=1)
-    if is_caching_features:
-        print('用户点击次数特征--正在缓存train_data')
-        train_data.to_csv('./cache/features_cache/part2_train_features_phase_{}.csv'.format(phase), index=False)
-
-    valid_data['user_click_num'] = valid_data.apply(
-        lambda x: user_click_dict[x['user_id']] if user_click_dict.get(x['user_id']) else 0, axis=1)
-    if is_caching_features:
-        print('用户点击次数特征--正在缓存valid_data')
-        valid_data.to_csv('./cache/features_cache/part2_valid_features_phase_{}.csv'.format(phase), index=False)
-
-    if is_open_train_recall:
-        train_user_recall_df['user_click_num'] = train_user_recall_df.apply(
-            lambda x: user_click_dict[x['user_id']] if user_click_dict.get(x['user_id']) else 0, axis=1)
-        if is_caching_features:
-            print('用户点击次数特征--正在缓存train_user_recall_df')
-            train_user_recall_df.to_csv(
-                './cache/features_cache/part2_train_user_recall_features_phase_{}.csv'.format(phase), index=False)
-
-    test_user_recall_df['user_click_num'] = test_user_recall_df.apply(
-        lambda x: user_click_dict[x['user_id']] if user_click_dict.get(x['user_id']) else 0, axis=1)
-    if is_caching_features:
-        print('用户点击次数特征--正在缓存test_user_recall_df')
-        test_user_recall_df.to_csv(
-            './cache/features_cache/part2_test_user_recall_features_phase_{}.csv'.format(phase), index=False)
-
-
-    ''' 本item在全局的热度：先使用全量数据集统计，调优的时候分在train、test、item-feature中的热度 '''
-    print('item在全局的热度 doing')
-    train_data = train_data.merge(hot_df, on='item_id', how='left')
-    valid_data = valid_data.merge(hot_df, on='item_id', how='left')
-    if is_open_train_recall:
-        train_user_recall_df = train_user_recall_df.merge(hot_df, on='item_id', how='left')
-    test_user_recall_df = test_user_recall_df.merge(hot_df, on='item_id', how='left')
-
-    ''' user点击序中item平均热度、最大热度、最小热度 -- 先不分train和test即使用全量数据集统计，调优的时候再分 '''
-    click_df = click_df.merge(hot_df, on='item_id', how='left')
-    user_item_hot_df = \
-        click_df.groupby('user_id').agg({'item_deg': lambda x: ','.join([str(i) for i in list(x)])}).reset_index()
-    user_item_hot_df.columns = ['user_id', 'item_hot_arr']
-    user_item_hot_df['item_hot_arr'] = user_item_hot_df.apply(
-        lambda x: np.array(list(x['item_hot_arr'].split(',')), dtype=np.int), axis=1)
-    user_item_hot_dict = utils.two_columns_df2dict(user_item_hot_df)
-
-    train_data['user_item_mean_deg'] = \
-        train_data.apply(lambda x: np.nanmean(user_item_hot_dict[x['user_id']]), axis=1)
-    train_data['user_item_min_deg'] = \
-        train_data.apply(lambda x: np.nanmin(user_item_hot_dict[x['user_id']]), axis=1)
-    train_data['user_item_max_deg'] = \
-        train_data.apply(lambda x: np.nanmax(user_item_hot_dict[x['user_id']]), axis=1)
-    if is_caching_features:
-        print('user点击序中item热度统计特征--正在缓存train_data')
-        train_data.to_csv('./cache/features_cache/part2_train_features_phase_{}.csv'.format(phase), index=False)
-
-    valid_data['user_item_mean_deg'] = \
-        valid_data.apply(lambda x: np.nanmean(user_item_hot_dict[x['user_id']]), axis=1)
-    valid_data['user_item_min_deg'] = \
-        valid_data.apply(lambda x: np.nanmin(user_item_hot_dict[x['user_id']]), axis=1)
-    valid_data['user_item_max_deg'] = \
-        valid_data.apply(lambda x: np.nanmax(user_item_hot_dict[x['user_id']]), axis=1)
-    if is_caching_features:
-        print('user点击序中item热度统计特征--正在缓存valid_data')
-        valid_data.to_csv('./cache/features_cache/part2_valid_features_phase_{}.csv'.format(phase), index=False)
-
-    if is_open_train_recall:
-        train_user_recall_df['user_item_mean_deg'] = \
-            train_user_recall_df.apply(lambda x: np.nanmean(user_item_hot_dict[x['user_id']]), axis=1)
-        train_user_recall_df['user_item_min_deg'] = \
-            train_user_recall_df.apply(lambda x: np.nanmin(user_item_hot_dict[x['user_id']]), axis=1)
-        train_user_recall_df['user_item_max_deg'] = \
-            train_user_recall_df.apply(lambda x: np.nanmax(user_item_hot_dict[x['user_id']]), axis=1)
-        if is_caching_features:
-            print('user点击序中item热度统计特征--正在缓存train_user_recall_df')
-            train_user_recall_df.to_csv(
-                './cache/features_cache/part2_train_user_recall_features_phase_{}.csv'.format(phase), index=False)
-
-    test_user_recall_df['user_item_mean_deg'] = \
-        test_user_recall_df.apply(lambda x: np.nanmean(user_item_hot_dict[x['user_id']]), axis=1)
-    test_user_recall_df['user_item_min_deg'] = \
-        test_user_recall_df.apply(lambda x: np.nanmin(user_item_hot_dict[x['user_id']]), axis=1)
-    test_user_recall_df['user_item_max_deg'] = \
-        test_user_recall_df.apply(lambda x: np.nanmax(user_item_hot_dict[x['user_id']]), axis=1)
-    if is_caching_features:
-        print('user点击序中item热度统计特征--正在缓存test_user_recall_df')
-        test_user_recall_df.to_csv(
-            './cache/features_cache/part2_test_user_recall_features_phase_{}.csv'.format(phase), index=False)
-
-    ''' user平均点击间隔、最大点击间隔、最小点击间隔 -- 需要分train和test两个集合统计 '''
-    train_time_interval_df = \
-        click_df[click_df['train_or_test'] == 'train'].groupby('user_id').agg({'time': lambda x: ','.join([str(i) for i in list(x)])}).reset_index()
-    train_time_interval_df.columns = ['user_id', 'time_interval_arr']
-    train_time_interval_df['time_interval_arr'] = train_time_interval_df.apply(
-        lambda x: np.array(list(x['time_interval_arr'].split(',')), dtype=np.float)[:-1] -
-                  np.array(list(x['time_interval_arr'].split(',')), dtype=np.float)[1:],
-        axis=1
+    print('官方特征 start time:{}'.format(time_str))
+    # 注意，此处click_df中user_id必须包含上述四个集合user
+    total_set_user = set(train_data['user_id']).union(set(valid_data['user_id'])).union(set(train_user_recall_df['user_id'])).union(set(test_user_recall_df['user_id']))
+    assert (
+        0 == len(set(click_df['user_id']).difference(total_set_user)) and
+        0 == len(total_set_user.difference(set(click_df['user_id'])))
     )
-    train_time_interval_dict = utils.two_columns_df2dict(train_time_interval_df)
+    user_features = get_user_features(click_df, item_info_df, item_txt_embedding_dim, item_img_embedding_dim)
+    user_features_dict = transfer_user_features_df2dict(user_features, item_txt_embedding_dim)
+    item_features_dict = transfer_item_features_df2dict(item_info_df, item_txt_embedding_dim)
 
-    train_data['user_click_interval_mean'] = \
-        train_data.apply(lambda x: np.nanmean(train_time_interval_dict[x['user_id']]), axis=1)
-    train_data['user_click_interval_min'] = \
-        train_data.apply(lambda x: np.nanmin(train_time_interval_dict[x['user_id']]), axis=1)
-    train_data['user_click_interval_max'] = \
-        train_data.apply(lambda x: np.nanmax(train_time_interval_dict[x['user_id']]), axis=1)
+    assert item_txt_embedding_dim == item_img_embedding_dim
+    # 每计算好一个数据集就缓存下来
+    train_data = cal_txt_img_sim(train_data, user_features_dict, item_features_dict, item_img_embedding_dim, process_num)
     if is_caching_features:
-        print('用户点击时间间隔特征--正在缓存train_data')
-        train_data.to_csv('./cache/features_cache/part2_train_features_phase_{}.csv'.format(phase), index=False)
+        print('正在缓存train_data')
+        train_data.to_csv('./cache/features_cache/part0_train_features_phase_{}.csv'.format(phase), index=False)
+    print(train_data)
 
-    valid_data['user_click_interval_mean'] = \
-        valid_data.apply(lambda x: np.nanmean(train_time_interval_dict[x['user_id']]), axis=1)
-    valid_data['user_click_interval_min'] = \
-        valid_data.apply(lambda x: np.nanmin(train_time_interval_dict[x['user_id']]), axis=1)
-    valid_data['user_click_interval_max'] = \
-        valid_data.apply(lambda x: np.nanmax(train_time_interval_dict[x['user_id']]), axis=1)
+    valid_data = cal_txt_img_sim(valid_data, user_features_dict, item_features_dict, item_img_embedding_dim, process_num)
     if is_caching_features:
-        print('用户点击时间间隔特征--正在缓存valid_data')
-        valid_data.to_csv('./cache/features_cache/part2_valid_features_phase_{}.csv'.format(phase), index=False)
+        print('正在缓存valid_data')
+        valid_data.to_csv('./cache/features_cache/part0_valid_features_phase_{}.csv'.format(phase), index=False)
 
     if is_open_train_recall:
-        train_user_recall_df['user_click_interval_mean'] = \
-            train_user_recall_df.apply(lambda x: np.nanmean(train_time_interval_dict[x['user_id']]), axis=1)
-        train_user_recall_df['user_click_interval_min'] = \
-            train_user_recall_df.apply(lambda x: np.nanmin(train_time_interval_dict[x['user_id']]), axis=1)
-        train_user_recall_df['user_click_interval_max'] = \
-            train_user_recall_df.apply(lambda x: np.nanmax(train_time_interval_dict[x['user_id']]), axis=1)
+        train_user_recall_df = cal_txt_img_sim(train_user_recall_df, user_features_dict, item_features_dict, item_img_embedding_dim, process_num)
         if is_caching_features:
-            print('用户点击时间间隔特征--正在缓存train_user_recall_df')
-            train_user_recall_df.to_csv('./cache/features_cache/part2_train_user_recall_features_phase_{}.csv'.format(phase), index=False)
+            print('正在缓存train_user_recall_df')
+            train_user_recall_df.to_csv(
+                './cache/features_cache/part0_train_user_recall_features_phase_{}.csv'.format(phase), index=False
+            )
 
-    test_time_interval_df = \
-        click_df[click_df['train_or_test'] == 'test'].groupby('user_id').agg({'time': lambda x: ','.join([str(i) for i in list(x)])}).reset_index()
-    test_time_interval_df.columns = ['user_id', 'time_interval_arr']
-    test_time_interval_df['time_interval_arr'] = test_time_interval_df.apply(
-        lambda x: np.array(list(x['time_interval_arr'].split(',')), dtype=np.float)[:-1] -
-                  np.array(list(x['time_interval_arr'].split(',')), dtype=np.float)[1:],
-        axis=1
-    )
-    test_time_interval_dict = utils.two_columns_df2dict(test_time_interval_df)
-
-    test_user_recall_df['user_click_interval_mean'] = \
-        test_user_recall_df.apply(
-            lambda x: np.nanmean(test_time_interval_dict[x['user_id']]) if 0 != len(test_time_interval_dict[x['user_id']]) else np.nan,
-            axis=1
-        )
-    test_user_recall_df['user_click_interval_min'] = \
-        test_user_recall_df.apply(
-            lambda x: np.nanmin(test_time_interval_dict[x['user_id']]) if 0 != len(test_time_interval_dict[x['user_id']]) else np.nan,
-            axis=1
-        )
-    test_user_recall_df['user_click_interval_max'] = \
-        test_user_recall_df.apply(
-            lambda x: np.nanmax(test_time_interval_dict[x['user_id']]) if 0 != len(test_time_interval_dict[x['user_id']]) else np.nan,
-            axis=1
-        )
+    test_user_recall_df = cal_txt_img_sim(test_user_recall_df, user_features_dict, item_features_dict, item_img_embedding_dim, process_num)
     if is_caching_features:
-        print('用户点击时间间隔特征--正在缓存test_user_recall_df')
-        test_user_recall_df.to_csv('./cache/features_cache/part2_test_user_recall_features_phase_{}.csv'.format(phase), index=False)
+        print('正在缓存test_user_recall_df')
+        test_user_recall_df.to_csv(
+            './cache/features_cache/part0_test_user_recall_features_phase_{}.csv'.format(phase), index=False
+        )
+
+
+    '''
+    点击序：
+    1. 纯item序列  -- 砍掉
+    2. item序列和对应user  -- 砍掉
+    3. 纯user序列  -- 砍掉
+    4. user序列和共同item  -- 砍掉
+    5. 2 带来的user和item相似度
+    6. 4 带来的user和item相似度
+    '''
+    time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    print('点击序embedding特征 start time:{}'.format(time_str))
+    dict_embedding_all_ui_item, dict_embedding_all_ui_user = click_embedding(click_df, item_img_embedding_dim)
+    train_data = cal_click_sim(
+        train_data, dict_embedding_all_ui_item, dict_embedding_all_ui_user, process_num
+    )
+    if is_caching_features:
+        print('正在缓存train_data')
+        train_data.to_csv('./cache/features_cache/part0_train_features_phase_{}.csv'.format(phase), index=False)
+
+    valid_data = cal_click_sim(
+        valid_data, dict_embedding_all_ui_item, dict_embedding_all_ui_user, process_num
+    )
+    if is_caching_features:
+        print('正在缓存valid_data')
+        valid_data.to_csv('./cache/features_cache/part0_valid_features_phase_{}.csv'.format(phase), index=False)
+
+    if is_open_train_recall:
+        train_user_recall_df = cal_click_sim(
+            train_user_recall_df, dict_embedding_all_ui_item, dict_embedding_all_ui_user, process_num
+        )
+        if is_caching_features:
+            print('正在缓存train_user_recall_df')
+            train_user_recall_df.to_csv(
+                './cache/features_cache/part0_train_user_recall_features_phase_{}.csv'.format(phase), index=False
+            )
+
+    test_user_recall_df = cal_click_sim(
+        test_user_recall_df, dict_embedding_all_ui_item, dict_embedding_all_ui_user, process_num
+    )
+    if is_caching_features:
+        print('正在缓存test_user_recall_df')
+        test_user_recall_df.to_csv(
+            './cache/features_cache/part0_test_user_recall_features_phase_{}.csv'.format(phase), index=False
+        )
+    print(train_data.columns)
+    print(train_data.iloc[:5, :])
+    print(valid_data.iloc[:5, :])
+    print(train_user_recall_df.iloc[:5, :])
+    print(test_user_recall_df.iloc[:5, :])
+
+    # '''
+    # 统计特征:
+    # 一阶特征：
+    #     user点击序中user点击次数（即 点击深度 TODO 去做个统计：点击深度和冷门物品偏好的关系） -- 全量数据集统计
+    #     user点击序中item平均热度、最大热度、最小热度 -- 先不分train和test即使用全量数据集统计，调优的时候再分
+    #     user平均点击间隔、最大点击间隔、最小点击间隔 -- 需要分train和test两个集合统计
+    #     本item在全局的热度：先使用全量数据集统计，调优的时候分在train、test、item-feature中的热度
+    # 二阶特征（样本中user和item交互）：
+    #     样本中user和item的距离--如果item在user点击序中则根据时间排序当做距离，否则设为最大距离（最近一个点击距离0）
+    #     ? 用户热度--用户点击序中所有item热度和
+    # '''
+    # time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    # print('统计特征 start time:{}'.format(time_str))
+    #
+    # click_df = click_df.sort_values(['user_id', 'time'], ascending=False).reset_index(drop=True)
+    #
+    # ''' user点击序中user点击次数（即 点击深度 TODO 去做个统计：点击深度和冷门物品偏好的关系） -- 全量数据集统计 '''
+    # user_click_num_df = click_df.groupby('user_id')['item_id'].count().reset_index()
+    # user_click_num_df.columns = ['user_id', 'user_click_num']
+    # user_click_dict = utils.two_columns_df2dict(user_click_num_df)
+    #
+    # train_data['user_click_num'] = train_data.apply(
+    #     lambda x: user_click_dict[x['user_id']] if user_click_dict.get(x['user_id']) else 0, axis=1)
+    # if is_caching_features:
+    #     print('用户点击次数特征--正在缓存train_data')
+    #     train_data.to_csv('./cache/features_cache/part2_train_features_phase_{}.csv'.format(phase), index=False)
+    #
+    # valid_data['user_click_num'] = valid_data.apply(
+    #     lambda x: user_click_dict[x['user_id']] if user_click_dict.get(x['user_id']) else 0, axis=1)
+    # if is_caching_features:
+    #     print('用户点击次数特征--正在缓存valid_data')
+    #     valid_data.to_csv('./cache/features_cache/part2_valid_features_phase_{}.csv'.format(phase), index=False)
+    #
+    # if is_open_train_recall:
+    #     train_user_recall_df['user_click_num'] = train_user_recall_df.apply(
+    #         lambda x: user_click_dict[x['user_id']] if user_click_dict.get(x['user_id']) else 0, axis=1)
+    #     if is_caching_features:
+    #         print('用户点击次数特征--正在缓存train_user_recall_df')
+    #         train_user_recall_df.to_csv(
+    #             './cache/features_cache/part2_train_user_recall_features_phase_{}.csv'.format(phase), index=False)
+    #
+    # test_user_recall_df['user_click_num'] = test_user_recall_df.apply(
+    #     lambda x: user_click_dict[x['user_id']] if user_click_dict.get(x['user_id']) else 0, axis=1)
+    # if is_caching_features:
+    #     print('用户点击次数特征--正在缓存test_user_recall_df')
+    #     test_user_recall_df.to_csv(
+    #         './cache/features_cache/part2_test_user_recall_features_phase_{}.csv'.format(phase), index=False)
+    #
+    #
+    # ''' 本item在全局的热度：先使用全量数据集统计，调优的时候分在train、test、item-feature中的热度 '''
+    # print('item在全局的热度 doing')
+    # train_data = train_data.merge(hot_df, on='item_id', how='left')
+    # valid_data = valid_data.merge(hot_df, on='item_id', how='left')
+    # if is_open_train_recall:
+    #     train_user_recall_df = train_user_recall_df.merge(hot_df, on='item_id', how='left')
+    # test_user_recall_df = test_user_recall_df.merge(hot_df, on='item_id', how='left')
+    #
+    # ''' user点击序中item平均热度、最大热度、最小热度 -- 先不分train和test即使用全量数据集统计，调优的时候再分 '''
+    # click_df = click_df.merge(hot_df, on='item_id', how='left')
+    # user_item_hot_df = \
+    #     click_df.groupby('user_id').agg({'item_deg': lambda x: ','.join([str(i) for i in list(x)])}).reset_index()
+    # user_item_hot_df.columns = ['user_id', 'item_hot_arr']
+    # user_item_hot_df['item_hot_arr'] = user_item_hot_df.apply(
+    #     lambda x: np.array(list(x['item_hot_arr'].split(',')), dtype=np.int), axis=1)
+    # user_item_hot_dict = utils.two_columns_df2dict(user_item_hot_df)
+    #
+    # train_data['user_item_mean_deg'] = \
+    #     train_data.apply(lambda x: np.nanmean(user_item_hot_dict[x['user_id']]), axis=1)
+    # train_data['user_item_min_deg'] = \
+    #     train_data.apply(lambda x: np.nanmin(user_item_hot_dict[x['user_id']]), axis=1)
+    # train_data['user_item_max_deg'] = \
+    #     train_data.apply(lambda x: np.nanmax(user_item_hot_dict[x['user_id']]), axis=1)
+    # if is_caching_features:
+    #     print('user点击序中item热度统计特征--正在缓存train_data')
+    #     train_data.to_csv('./cache/features_cache/part2_train_features_phase_{}.csv'.format(phase), index=False)
+    #
+    # valid_data['user_item_mean_deg'] = \
+    #     valid_data.apply(lambda x: np.nanmean(user_item_hot_dict[x['user_id']]), axis=1)
+    # valid_data['user_item_min_deg'] = \
+    #     valid_data.apply(lambda x: np.nanmin(user_item_hot_dict[x['user_id']]), axis=1)
+    # valid_data['user_item_max_deg'] = \
+    #     valid_data.apply(lambda x: np.nanmax(user_item_hot_dict[x['user_id']]), axis=1)
+    # if is_caching_features:
+    #     print('user点击序中item热度统计特征--正在缓存valid_data')
+    #     valid_data.to_csv('./cache/features_cache/part2_valid_features_phase_{}.csv'.format(phase), index=False)
+    #
+    # if is_open_train_recall:
+    #     train_user_recall_df['user_item_mean_deg'] = \
+    #         train_user_recall_df.apply(lambda x: np.nanmean(user_item_hot_dict[x['user_id']]), axis=1)
+    #     train_user_recall_df['user_item_min_deg'] = \
+    #         train_user_recall_df.apply(lambda x: np.nanmin(user_item_hot_dict[x['user_id']]), axis=1)
+    #     train_user_recall_df['user_item_max_deg'] = \
+    #         train_user_recall_df.apply(lambda x: np.nanmax(user_item_hot_dict[x['user_id']]), axis=1)
+    #     if is_caching_features:
+    #         print('user点击序中item热度统计特征--正在缓存train_user_recall_df')
+    #         train_user_recall_df.to_csv(
+    #             './cache/features_cache/part2_train_user_recall_features_phase_{}.csv'.format(phase), index=False)
+    #
+    # test_user_recall_df['user_item_mean_deg'] = \
+    #     test_user_recall_df.apply(lambda x: np.nanmean(user_item_hot_dict[x['user_id']]), axis=1)
+    # test_user_recall_df['user_item_min_deg'] = \
+    #     test_user_recall_df.apply(lambda x: np.nanmin(user_item_hot_dict[x['user_id']]), axis=1)
+    # test_user_recall_df['user_item_max_deg'] = \
+    #     test_user_recall_df.apply(lambda x: np.nanmax(user_item_hot_dict[x['user_id']]), axis=1)
+    # if is_caching_features:
+    #     print('user点击序中item热度统计特征--正在缓存test_user_recall_df')
+    #     test_user_recall_df.to_csv(
+    #         './cache/features_cache/part2_test_user_recall_features_phase_{}.csv'.format(phase), index=False)
+    #
+    # ''' user平均点击间隔、最大点击间隔、最小点击间隔 -- 需要分train和test两个集合统计 '''
+    # train_time_interval_df = \
+    #     click_df[click_df['train_or_test'] == 'train'].groupby('user_id').agg({'time': lambda x: ','.join([str(i) for i in list(x)])}).reset_index()
+    # train_time_interval_df.columns = ['user_id', 'time_interval_arr']
+    # train_time_interval_df['time_interval_arr'] = train_time_interval_df.apply(
+    #     lambda x: np.array(list(x['time_interval_arr'].split(',')), dtype=np.float)[:-1] -
+    #               np.array(list(x['time_interval_arr'].split(',')), dtype=np.float)[1:],
+    #     axis=1
+    # )
+    # train_time_interval_dict = utils.two_columns_df2dict(train_time_interval_df)
+    #
+    # train_data['user_click_interval_mean'] = \
+    #     train_data.apply(lambda x: np.nanmean(train_time_interval_dict[x['user_id']]), axis=1)
+    # train_data['user_click_interval_min'] = \
+    #     train_data.apply(lambda x: np.nanmin(train_time_interval_dict[x['user_id']]), axis=1)
+    # train_data['user_click_interval_max'] = \
+    #     train_data.apply(lambda x: np.nanmax(train_time_interval_dict[x['user_id']]), axis=1)
+    # if is_caching_features:
+    #     print('用户点击时间间隔特征--正在缓存train_data')
+    #     train_data.to_csv('./cache/features_cache/part2_train_features_phase_{}.csv'.format(phase), index=False)
+    #
+    # valid_data['user_click_interval_mean'] = \
+    #     valid_data.apply(lambda x: np.nanmean(train_time_interval_dict[x['user_id']]), axis=1)
+    # valid_data['user_click_interval_min'] = \
+    #     valid_data.apply(lambda x: np.nanmin(train_time_interval_dict[x['user_id']]), axis=1)
+    # valid_data['user_click_interval_max'] = \
+    #     valid_data.apply(lambda x: np.nanmax(train_time_interval_dict[x['user_id']]), axis=1)
+    # if is_caching_features:
+    #     print('用户点击时间间隔特征--正在缓存valid_data')
+    #     valid_data.to_csv('./cache/features_cache/part2_valid_features_phase_{}.csv'.format(phase), index=False)
+    #
+    # if is_open_train_recall:
+    #     train_user_recall_df['user_click_interval_mean'] = \
+    #         train_user_recall_df.apply(lambda x: np.nanmean(train_time_interval_dict[x['user_id']]), axis=1)
+    #     train_user_recall_df['user_click_interval_min'] = \
+    #         train_user_recall_df.apply(lambda x: np.nanmin(train_time_interval_dict[x['user_id']]), axis=1)
+    #     train_user_recall_df['user_click_interval_max'] = \
+    #         train_user_recall_df.apply(lambda x: np.nanmax(train_time_interval_dict[x['user_id']]), axis=1)
+    #     if is_caching_features:
+    #         print('用户点击时间间隔特征--正在缓存train_user_recall_df')
+    #         train_user_recall_df.to_csv('./cache/features_cache/part2_train_user_recall_features_phase_{}.csv'.format(phase), index=False)
+    #
+    # test_time_interval_df = \
+    #     click_df[click_df['train_or_test'] == 'test'].groupby('user_id').agg({'time': lambda x: ','.join([str(i) for i in list(x)])}).reset_index()
+    # test_time_interval_df.columns = ['user_id', 'time_interval_arr']
+    # test_time_interval_df['time_interval_arr'] = test_time_interval_df.apply(
+    #     lambda x: np.array(list(x['time_interval_arr'].split(',')), dtype=np.float)[:-1] -
+    #               np.array(list(x['time_interval_arr'].split(',')), dtype=np.float)[1:],
+    #     axis=1
+    # )
+    # test_time_interval_dict = utils.two_columns_df2dict(test_time_interval_df)
+    #
+    # test_user_recall_df['user_click_interval_mean'] = \
+    #     test_user_recall_df.apply(
+    #         lambda x: np.nanmean(test_time_interval_dict[x['user_id']]) if 0 != len(test_time_interval_dict[x['user_id']]) else np.nan,
+    #         axis=1
+    #     )
+    # test_user_recall_df['user_click_interval_min'] = \
+    #     test_user_recall_df.apply(
+    #         lambda x: np.nanmin(test_time_interval_dict[x['user_id']]) if 0 != len(test_time_interval_dict[x['user_id']]) else np.nan,
+    #         axis=1
+    #     )
+    # test_user_recall_df['user_click_interval_max'] = \
+    #     test_user_recall_df.apply(
+    #         lambda x: np.nanmax(test_time_interval_dict[x['user_id']]) if 0 != len(test_time_interval_dict[x['user_id']]) else np.nan,
+    #         axis=1
+    #     )
+    # if is_caching_features:
+    #     print('用户点击时间间隔特征--正在缓存test_user_recall_df')
+    #     test_user_recall_df.to_csv('./cache/features_cache/part2_test_user_recall_features_phase_{}.csv'.format(phase), index=False)
 
     # '''
     # 暂时关系， 此特征有问题，存在数据泄露

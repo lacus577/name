@@ -226,7 +226,7 @@ def my_cos_sim(vec1, vec2):
 
     assert len(vec1) == len(vec2)
 
-    return np.dot(vec1, vec2) / np.linalg.norm(vec1) * np.linalg.norm(vec2)
+    return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
 
 def cal_sim_(user_features, item_features):
     if user_features.shape[0] == 0 or item_features.shape[0] == 0:
@@ -531,13 +531,13 @@ def process_after_featuring(train_data, valid_data, train_user_recall_df=None, t
     #                     'click_user_item_sim', 'item_distance', 'user_click_num', 'user_click_interval_mean',
     #                     'user_click_interval_min', 'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
     #                     'user_item_min_deg', 'user_item_max_deg']
-    # features_columns = ['user_id', 'item_id',
-    #                     'itemcf_score', 'txt_embedding_sim', 'img_embedding_sim', 'click_item_user_sim',
-    #                     'click_user_item_sim']
-    features_columns = ['user_id', 'item_id', 'itemcf_score',
-                        'user_click_num', 'user_click_interval_mean',
-                        'user_click_interval_min', 'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
-                        'user_item_min_deg', 'user_item_max_deg']
+    features_columns = ['user_id', 'item_id',
+                        'itemcf_score', 'txt_embedding_sim', 'img_embedding_sim', 'click_item_user_sim',
+                        'click_user_item_sim']
+    # features_columns = ['user_id', 'item_id', 'itemcf_score',
+    #                     'user_click_num', 'user_click_interval_mean',
+    #                     'user_click_interval_min', 'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
+    #                     'user_item_min_deg', 'user_item_max_deg']
 
     train_data = train_data[features_columns + ['label']]
     valid_data = valid_data[features_columns + ['label']]
