@@ -1,5 +1,6 @@
 import multiprocessing
 
+from tqdm import tqdm
 import psutil
 import pandas as pd
 import numpy as np
@@ -560,22 +561,31 @@ def get_samples_v1(df, item_info_df, time_interval_thr):
     '''
     df = df[df['train_or_test'] != 'predict']
     user_set = set(df['user_id'])
+    print(len(user_set))
     positive_sample_list = []
-    for user in user_set:
+    for user in tqdm(user_set):
         user_df = df[df['user_id'] == user]
         user_df = user_df.sort_values(['time'], ascending=False).reset_index()
         user_df['time_interval'] = list(np.array(list(user_df['time']))[:-1] - np.array(list(user_df['time']))[1:]) + [np.inf]
 
         s = e = 0
+        one_user_sample = 0
+        print(one_user_sample)
         for i in range(user_df.shape[0]):
             if user_df.loc[i, 'time_interval'] <= time_interval_thr:
                 e += 1
             else:
                 if e - s >= 2:
                     positive_sample_list.append([user] + list(user_df.loc[s: e, 'item_id']))
+                    one_user_sample += 1
                 s = e = i + 1
 
     print(len(positive_sample_list))
+
+    for positive_sample in positive_sample_list:
+        user = positive_sample[0]
+        tmp = df[df['user_id'] == user]
+
 
 
 
