@@ -572,7 +572,7 @@ def get_samples_v1(df, item_info_df, time_interval_thr):
                 e += 1
             else:
                 if e - s >= 2:
-                    positive_sample_list.append([user] + list(user_df.loc[s: e+1, 'item_id']))
+                    positive_sample_list.append([user] + list(user_df.loc[s: e, 'item_id']))
                 s = e = i + 1
 
     print(len(positive_sample_list))
