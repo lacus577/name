@@ -65,6 +65,9 @@ is_submition = True
 ''' itemCF对1000个训练集中的user进行召回，用于精排模型验证 '''
 itemCF_train_subsampling = 1000
 
+''' 缓存路径合集 '''
+samples_cache_path = './cache/features_cache/samples.csv'
+
 def click_embedding(click_info_df, dim):
     # print('-------- sku1 sku2 sku3 sku4 sku5 user ----------')
     # dim, epochs, learning_rate = 32, 1, 0.5
@@ -735,6 +738,7 @@ if __name__ == '__main__':
 
 
     sample_df = get_samples_v1(all_phase_click_666, item_info_df, 280, 5, item_txt_embedding_dim, process_num)
+    sample_df.to_csv(samples_cache_path, index=False)
 
     # submit_all = pd.DataFrame()
     # # one_phase_click = pd.DataFrame()
