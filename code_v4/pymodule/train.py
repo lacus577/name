@@ -746,6 +746,10 @@ if __name__ == '__main__':
         all_phase_click_org = all_phase_click_org.append(one_phase_test_click).reset_index(drop=True)
         all_phase_click_org = all_phase_click_org.append(one_phase_qtime).reset_index(drop=True)
 
+    ''' sampling '''
+    if subsampling:
+        all_phase_click_org = utils.subsampling_user(all_phase_click_org, subsampling)
+
     # 删除重复点击
     all_phase_click = utils.del_dup(all_phase_click_org)
     # 删除待预测时间点 之后的点击数据 防止数据泄露
