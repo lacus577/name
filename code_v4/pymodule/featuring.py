@@ -639,7 +639,8 @@ def make_samples(start_index, sample_list, item_info_dict, negative_sample_dict)
             user, item,
             user_txt_embedding, user_img_embedding,
             item_info_dict['txt_vec'].get(item),
-            item_info_dict['img_vec'].get(item)
+            item_info_dict['img_vec'].get(item),
+            1 # 正样本
         ]]
 
         for negative_item in negative_sample_dict[start_index + i]:
@@ -648,13 +649,14 @@ def make_samples(start_index, sample_list, item_info_dict, negative_sample_dict)
                     user, negative_item,
                     user_txt_embedding, user_img_embedding,
                     item_info_dict['txt_vec'].get(negative_item),
-                    item_info_dict['img_vec'].get(negative_item)
+                    item_info_dict['img_vec'].get(negative_item),
+                    0 # 负样本
                 ]
             )
 
         sample_df = sample_df.append(one_user_df)
 
-    sample_df.columns = ['user_id', 'item_id', 'user_txt_vec', 'user_img_vec', 'item_txt_vec', 'item_img_vec']
+    sample_df.columns = ['user_id', 'item_id', 'user_txt_vec', 'user_img_vec', 'item_txt_vec', 'item_img_vec', 'label']
     return sample_df
 
 
