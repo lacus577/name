@@ -629,12 +629,11 @@ def get_samples_v1(df, item_info_df, time_interval_thr, negative_num, dim, proce
 
 def make_samples(start_index, sample_list, item_info_dict, negative_sample_dict):
     sample_df = pd.DataFrame()
-    for i in range(len(sample_list)):
+    for i in tqdm(range(len(sample_list))):
         user = sample_list[i][0]
         item = sample_list[i][1]
         user_txt_embedding = np.nansum([item_info_dict['txt_vec'].get(j) for j in sample_list[i][2: ]], axis=0)
         user_img_embedding = np.nansum([item_info_dict['img_vec'].get(j) for j in sample_list[i][2: ]], axis=0)
-        print('embedding', user_txt_embedding)
 
         one_user_df = [[
             user, item,
@@ -656,7 +655,6 @@ def make_samples(start_index, sample_list, item_info_dict, negative_sample_dict)
         sample_df = sample_df.append(one_user_df)
 
     sample_df.columns = ['user_id', 'item_id', 'user_txt_vec', 'user_img_vec', 'item_txt_vec', 'item_img_vec']
-    print(sample_df)
     return sample_df
 
 
