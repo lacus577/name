@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from gensim import models
 
-from pymodule import constant, utils
+from pymodule import conf, utils
 
 def matrix_word2vec_embedding(click_all, flag, mode, threshold=0, dim=100, epochs=30, learning_rate=0.5):
     """
@@ -241,14 +241,12 @@ def cal_sim_(user_features, item_features):
 
     return my_cos_sim(user_vector, item_vector)
 
-def cal_user_item_sim(user_item_df, user_features_dict, item_features_dict, dim):
+def cal_user_item_sim(user_item_df):
     user_item_df['txt_embedding_sim'] = np.nan
     user_item_df.loc[:, 'txt_embedding_sim'] = user_item_df.apply(
         lambda x: my_cos_sim(
-            user_features_dict['txt_vec'].get(x['user_id']),
-            # user_features[user_features['user_id'] == x['user_id']].iloc[:, -dim-dim:-dim],
-            item_features_dict['txt_vec'].get(x['item_id'])
-            # item_features[item_features['item_id'] == x['item_id']].iloc[:, -dim-dim:-dim]
+            x['user_txt_vec'],
+            x['item_txt_vec']
         ),
         axis=1
     )
@@ -257,17 +255,15 @@ def cal_user_item_sim(user_item_df, user_features_dict, item_features_dict, dim)
     user_item_df['img_embedding_sim'] = np.nan
     user_item_df.loc[:, 'img_embedding_sim'] = user_item_df.apply(
         lambda x: my_cos_sim(
-            user_features_dict['img_vec'].get(x['user_id']),
-            # user_features[user_features['user_id'] == x['user_id']].iloc[:, -dim: ],
-            item_features_dict['img_vec'].get(x['item_id'])
-            # item_features[item_features['item_id'] == x['item_id']].iloc[:, -dim: ]
+            x['user_img_vec'],
+            x['item_img_vec']
         ),
         axis=1
     )
 
     return user_item_df
 
-def cal_txt_img_sim(df, user_features_dict, item_features_dict, dim, process_num):
+def cal_txt_img_sim(df, process_num):
     pool = multiprocessing.Pool(processes=process_num)
     process_result = []
     for i in range(process_num):
@@ -278,7 +274,7 @@ def cal_txt_img_sim(df, user_features_dict, item_features_dict, dim, process_num
         else:
             input_train_data = df.iloc[i * step:, :]
         process_result.append(
-            pool.apply_async(cal_user_item_sim, (input_train_data, user_features_dict, item_features_dict, dim,))
+            pool.apply_async(cal_user_item_sim, (input_train_data, ))
         )
 
     pool.close()
@@ -438,7 +434,7 @@ def cal_item_distance(df, total_df):
             if np.sum(
                 total_df[total_df['user_id'] == x['user_id']]['item_id'] == x['item_id']
             ) > 0
-            else constant.MAX_CLICK_LEN,
+            else conf.MAX_CLICK_LEN,
             axis=1
         )
     }

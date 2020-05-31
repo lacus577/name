@@ -9,7 +9,7 @@ from tqdm import tqdm
 from sklearn.decomposition import PCA
 import warnings
 
-from pymodule import constant
+from pymodule import conf
 from pymodule.rank import train_model_rf, train_model_lgb, rank_rf
 from pymodule.eval import metrics_recall
 from pymodule.recall import topk_recall_association_rules_open_source
@@ -67,6 +67,7 @@ itemCF_train_subsampling = 1000
 
 ''' 缓存路径合集 '''
 samples_cache_path = './cache/features_cache/samples.csv'
+features_cache_path = './cache/features_cache/features.csv'
 
 def click_embedding(click_info_df, dim):
     # print('-------- sku1 sku2 sku3 sku4 sku5 user ----------')
@@ -148,14 +149,9 @@ def read_features(phase, is_open_train_recall):
     return train_data, valid_data, test_user_recall_df
 
 def do_featuring(
-        click_df,
-        item_info_df,
-        user_info_df,
-        user_item_dict,
-        train_user_recall_df,
-        test_user_recall_df,
-        sim_matrix,
-        hot_df
+        all_phase_click,
+        sample_df,
+        process_num
 ):
     """
 
@@ -164,112 +160,20 @@ def do_featuring(
     :param user_info_df:
     :return:
     """
-    ''' 集合划分 '''
-    # 训练集 测试集
-    # 负样本采样：从所有点击历史中采样非正样本item
-    # TODO 从官方给的item表中采样、从点击+item表中采样
-    # TODO  many todo in sampling_negtive_samples
-    # todo 只用train去负采样，后面尝试train和test一起
-    if is_data_set_cached:
-        print('reading train/valid ... set')
-        train_data = pd.read_csv(
-            './cache/features_cache/train_data_{}.csv'.format(phase),
-            dtype={'user_id': np.str, 'item_id': np.str, 'label': np.int}
-        )
-        valid_data = pd.read_csv(
-            './cache/features_cache/valid_data_{}.csv'.format(phase),
-            dtype={'user_id': np.str, 'item_id': np.str, 'label': np.int}
-        )
-        train_user_recall_df = pd.read_csv(
-            './cache/features_cache/train_user_recall_{}.csv'.format(phase),
-            dtype={'user_id': np.str, 'item_id': np.str, 'label': np.int, 'itemcf_score': np.float}
-        )
-        test_user_recall_df = pd.read_csv(
-            './cache/features_cache/test_user_recall_{}.csv'.format(phase),
-            dtype={'user_id': np.str, 'item_id': np.str, 'itemcf_score': np.float}
-        )
-        print(train_data.shape)
-        print(valid_data.shape)
-        print(train_user_recall_df.shape)
-        print(test_user_recall_df.shape)
-    else:
-        train_test_df = click_df[click_df['train_or_test'] == 'train'][['user_id', 'item_id']]
-        user_set = set(train_test_df['user_id'])
-        negtive_features = utils.sampling_negtive_samples(user_set, train_test_df, sample_num=10)
-        # features = features.merge(user_features, on='user_id', how='left')
-        # features = features.merge(item_info_df, on='item_id', how='left')
-        negtive_features['label'] = 0
 
-        # time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        # print('正样本特征 start time:{}'.format(time_str))
-        # 正样本加入
-        positive_features = pd.DataFrame()
-        positive_features['user_id'] = list(user_item_dict.keys())
-        positive_features['item_id'] = list(user_item_dict.values())
-        # positive_features = positive_features.merge(user_features, on='user_id', how='left')
-        # positive_features = positive_features.merge(item_info_df, on='item_id', how='left')
-        positive_features['label'] = 1
-        # positive_features['train_or_test'] = 'train'
-
-        # 正负样本合并
-        features = negtive_features.append(positive_features).reset_index(drop=True)
-        # features.sort_values(by='user_id', inplace=True)
-        # features.reset_index(drop=True, inplace=True)
-
-
-        # time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        # print('训练集验证集划分 start time:{}'.format(time_str))
-        # TODO  many todo in train_test_split
-        train_data, valid_data = train_test_split(features, 0.8)
-
-        # 训练集召回结果，此部分用于验证上述训练集训练出来的模型
-        train_user_recall_df = train_user_recall_df[['user_id', 'item_id', 'itemcf_score']]
-        train_user_recall_df['label'] = 0
-        train_user_recall_df.loc[
-            train_user_recall_df['user_id'].isin(list(user_item_dict.keys())) & train_user_recall_df['item_id'].isin(list(user_item_dict.values())),
-            'label'
-        ] = 1
-
-        # 测试集召回结果，此部分用于提交
-        test_user_recall_df = test_user_recall_df[['user_id', 'item_id', 'itemcf_score']]
-
-        # if is_data_set_caching:
-        #     print('caching splited data.',
-        #           train_data.shape, valid_data.shape, train_user_recall_df.shape, test_user_recall_df.shape)
-        #     train_data.to_csv('./cache/features_cache/train_data_{}.csv'.format(phase), index=False)
-        #     valid_data.to_csv('./cache/features_cache/valid_data_{}.csv'.format(phase), index=False)
-        #     train_user_recall_df.to_csv('./cache/features_cache/train_user_recall_{}.csv'.format(phase), index=False)
-        #     test_user_recall_df.to_csv('./cache/features_cache/test_user_recall_{}.csv'.format(phase), index=False)
-
-    print(
-        np.sum(train_data['user_id'].isin(click_df['user_id'])), ',',
-        np.sum(click_df['user_id'].isin(train_data['user_id']))
-    )
-    '''
-    itemCF相似度：
-    '''
-    time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-    print('itemCF相似度特征 start time:{}'.format(time_str))
-    train_data['itemcf_score'] = np.nan
-    train_data.loc[:, 'itemcf_score'] = train_data.apply(
-        lambda x: sim_matrix[x['user_id']][x['item_id']]
-        if sim_matrix.get(x['user_id']) is not None and sim_matrix.get(x['user_id']).get(x['item_id']) is not None
-        else np.nan,
-        axis=1
-    )
-    print(train_data)
-
-    valid_data['itemcf_score'] = np.nan
-    valid_data.loc[:, 'itemcf_score'] = valid_data.apply(
-        lambda x: sim_matrix[x['user_id']][x['item_id']]
-        if sim_matrix.get(x['user_id']) is not None and sim_matrix.get(x['user_id']).get(x['item_id']) is not None
-        else np.nan,
-        axis=1
-    )
-
-    # 把负数统一洗成0 TODO 带来的问题：可能非常稀疏
-    # train_user_recall_df.loc[train_user_recall_df['itemcf_score'] < 0, 'itemcf_score'] = 0
-    # test_user_recall_df.loc[test_user_recall_df['itemcf_score'] < 0, 'itemcf_score'] = 0
+    # '''
+    # itemCF相似度：
+    # '''
+    # time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    # print('itemCF相似度特征 start time:{}'.format(time_str))
+    # train_data['itemcf_score'] = np.nan
+    # train_data.loc[:, 'itemcf_score'] = train_data.apply(
+    #     lambda x: sim_matrix[x['user_id']][x['item_id']]
+    #     if sim_matrix.get(x['user_id']) is not None and sim_matrix.get(x['user_id']).get(x['item_id']) is not None
+    #     else np.nan,
+    #     axis=1
+    # )
+    # print(train_data)
 
     '''
     官方特征:
@@ -278,43 +182,13 @@ def do_featuring(
     '''
     time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     print('官方特征 start time:{}'.format(time_str))
-    # 注意，此处click_df中user_id必须包含上述四个集合user
-    total_set_user = set(train_data['user_id']).union(set(valid_data['user_id'])).union(set(train_user_recall_df['user_id'])).union(set(test_user_recall_df['user_id']))
-    assert (
-        0 == len(set(click_df['user_id']).difference(total_set_user)) and
-        0 == len(total_set_user.difference(set(click_df['user_id'])))
-    )
-    user_features = get_user_features(click_df, item_info_df, item_txt_embedding_dim, item_img_embedding_dim)
-    user_features_dict = utils.transfer_user_features_df2dict(user_features, item_txt_embedding_dim)
-    item_features_dict = utils.transfer_item_features_df2dict(item_info_df, item_txt_embedding_dim)
 
-    assert item_txt_embedding_dim == item_img_embedding_dim
-    # 每计算好一个数据集就缓存下来
-    train_data = cal_txt_img_sim(train_data, user_features_dict, item_features_dict, item_img_embedding_dim, process_num)
+    # 每计算好一个特征就缓存下来
+    features_df = cal_txt_img_sim(sample_df, process_num)
     if is_caching_features:
-        print('正在缓存train_data')
-        train_data.to_csv('./cache/features_cache/part0_train_features_phase_{}.csv'.format(phase), index=False)
-    print(train_data)
-
-    valid_data = cal_txt_img_sim(valid_data, user_features_dict, item_features_dict, item_img_embedding_dim, process_num)
-    if is_caching_features:
-        print('正在缓存valid_data')
-        valid_data.to_csv('./cache/features_cache/part0_valid_features_phase_{}.csv'.format(phase), index=False)
-
-    if is_open_train_recall:
-        train_user_recall_df = cal_txt_img_sim(train_user_recall_df, user_features_dict, item_features_dict, item_img_embedding_dim, process_num)
-        if is_caching_features:
-            print('正在缓存train_user_recall_df')
-            train_user_recall_df.to_csv(
-                './cache/features_cache/part0_train_user_recall_features_phase_{}.csv'.format(phase), index=False
-            )
-
-    test_user_recall_df = cal_txt_img_sim(test_user_recall_df, user_features_dict, item_features_dict, item_img_embedding_dim, process_num)
-    if is_caching_features:
-        print('正在缓存test_user_recall_df')
-        test_user_recall_df.to_csv(
-            './cache/features_cache/part0_test_user_recall_features_phase_{}.csv'.format(phase), index=False
-        )
+        # print('正在缓存features_df')
+        features_df.to_csv(features_cache_path, index=False)
+    print(features_df)
 
 
     '''
@@ -342,30 +216,30 @@ def do_featuring(
     if is_caching_features:
         print('正在缓存valid_data')
         valid_data.to_csv('./cache/features_cache/part0_valid_features_phase_{}.csv'.format(phase), index=False)
-
-    if is_open_train_recall:
-        train_user_recall_df = cal_click_sim(
-            train_user_recall_df, dict_embedding_all_ui_item, dict_embedding_all_ui_user, process_num
-        )
-        if is_caching_features:
-            print('正在缓存train_user_recall_df')
-            train_user_recall_df.to_csv(
-                './cache/features_cache/part0_train_user_recall_features_phase_{}.csv'.format(phase), index=False
-            )
-
-    test_user_recall_df = cal_click_sim(
-        test_user_recall_df, dict_embedding_all_ui_item, dict_embedding_all_ui_user, process_num
-    )
-    if is_caching_features:
-        print('正在缓存test_user_recall_df')
-        test_user_recall_df.to_csv(
-            './cache/features_cache/part0_test_user_recall_features_phase_{}.csv'.format(phase), index=False
-        )
-    print(train_data.columns)
-    print(train_data.iloc[:5, :])
-    print(valid_data.iloc[:5, :])
-    print(train_user_recall_df.iloc[:5, :])
-    print(test_user_recall_df.iloc[:5, :])
+    #
+    # if is_open_train_recall:
+    #     train_user_recall_df = cal_click_sim(
+    #         train_user_recall_df, dict_embedding_all_ui_item, dict_embedding_all_ui_user, process_num
+    #     )
+    #     if is_caching_features:
+    #         print('正在缓存train_user_recall_df')
+    #         train_user_recall_df.to_csv(
+    #             './cache/features_cache/part0_train_user_recall_features_phase_{}.csv'.format(phase), index=False
+    #         )
+    #
+    # test_user_recall_df = cal_click_sim(
+    #     test_user_recall_df, dict_embedding_all_ui_item, dict_embedding_all_ui_user, process_num
+    # )
+    # if is_caching_features:
+    #     print('正在缓存test_user_recall_df')
+    #     test_user_recall_df.to_csv(
+    #         './cache/features_cache/part0_test_user_recall_features_phase_{}.csv'.format(phase), index=False
+    #     )
+    # print(train_data.columns)
+    # print(train_data.iloc[:5, :])
+    # print(valid_data.iloc[:5, :])
+    # print(train_user_recall_df.iloc[:5, :])
+    # print(test_user_recall_df.iloc[:5, :])
 
     # '''
     # 统计特征:
@@ -734,11 +608,14 @@ if __name__ == '__main__':
     # 时间处理 乘上 1591891140
     all_phase_click_666 = utils.process_time(all_phase_click_666, 1591891140)
 
-    all_phase_click = all_phase_click.sort_values(['user_id', 'time']).reset_index(drop=True)
+    all_phase_click_666 = all_phase_click_666.sort_values(['user_id', 'time']).reset_index(drop=True)
 
 
     sample_df = get_samples_v1(all_phase_click_666, item_info_df, 280, 5, item_txt_embedding_dim, process_num)
     sample_df.to_csv(samples_cache_path, index=False)
+
+    ''' 特征 '''
+    # do_featuring(sample_df, process_num)
 
     # submit_all = pd.DataFrame()
     # # one_phase_click = pd.DataFrame()
