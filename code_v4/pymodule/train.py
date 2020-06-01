@@ -148,22 +148,22 @@ if __name__ == '__main__':
         sample_df = pd.read_csv(conf.samples_cache_path, dtype={'user_id': np.str, 'item_id': np.str})
         sample_df.loc[:, 'user_txt_vec'] = sample_df.apply(
             lambda x: np.array([np.float(i) for i in x['user_txt_vec'].split('[')[1].split(']')[0].split()])
-            if x['user_txt_vec'] else x['user_txt_vec'],
+            if x['user_txt_vec'] is not np.nan and x['user_txt_vec'] else x['user_txt_vec'],
             axis=1
         )
         sample_df.loc[:, 'user_img_vec'] = sample_df.apply(
             lambda x: np.array([np.float(i) for i in x['user_img_vec'].split('[')[1].split(']')[0].split()])
-            if x['user_img_vec'] else x['user_img_vec'],
+            if x['user_img_vec'] is not np.nan and x['user_img_vec'] else x['user_img_vec'],
             axis=1
         )
         sample_df.loc[:, 'item_txt_vec'] = sample_df.apply(
             lambda x: np.array([np.float(i) for i in x['item_txt_vec'].split('[')[1].split(']')[0].split()])
-            if x['item_txt_vec'] else x['item_txt_vec'],
+            if x['item_txt_vec'] is not np.nan and x['item_txt_vec'] else x['item_txt_vec'],
             axis=1
         )
         sample_df.loc[:, 'item_img_vec'] = sample_df.apply(
             lambda x: np.array([np.float(i) for i in x['item_img_vec'].split('[')[1].split(']')[0].split()])
-            if x['item_img_vec'] else x['item_img_vec'],
+            if x['item_img_vec']  is not np.nan and x['item_img_vec'] else x['item_img_vec'],
             axis=1
         )
     else:
