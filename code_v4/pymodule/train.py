@@ -177,6 +177,7 @@ if __name__ == '__main__':
             if x['item_img_vec']  is not np.nan and x['item_img_vec'] else x['item_img_vec'],
             axis=1
         )
+        print('load samples, shape:{}'.format(sample_df.shape))
     else:
         sample_df = get_samples_v1(all_phase_click_666, item_info_df, 280, 5, item_txt_embedding_dim, conf.process_num)
         sample_df.to_csv(conf.samples_cache_path, index=False)
@@ -187,6 +188,7 @@ if __name__ == '__main__':
             conf.features_cache_path,
             dtype={'user_id': np.str, 'item_id': np.str}
         )
+        print('load features, shape:{}'.format(feature_df.shape))
     else:
         feature_df = do_featuring(all_phase_click_no_qtime, sample_df, hot_df, conf.process_num, item_txt_embedding_dim, is_recall=False)
 
@@ -231,12 +233,13 @@ if __name__ == '__main__':
                 pd.read_csv(conf.recall_cache_path.format(phase), dtype={'user_id': np.str, 'item_id': np.str})
             if conf.subsampling:
                 one_phase_recall_item_df = utils.subsampling_user(one_phase_recall_item_df, conf.subsampling)
-            print('load recall item: phase:{} shape:{}'.format(phase, one_phase_recall_item_df.shape[0]))
+            print('load recall items: phase:{} shape:{}'.format(phase, one_phase_recall_item_df.shape[0]))
         else:
             raise Exception('召回结果文件不存在')
 
         if conf.is_recall_sample_cached:
             recall_sample_df = pd.read_csv(conf.recall_sample_path.format(phase), dtype={'user_id': np.str, 'item_id': np.str})
+            print('load recall samples: phase:{} shape:{}'.format(phase, recall_sample_df.shape[0]))
         else:
             # 取前50rank
             one_phase_recall_item_df = \
@@ -250,6 +253,7 @@ if __name__ == '__main__':
 
         if conf.is_recall_feature_cached:
             recall_feature_df = pd.read_csv(conf.recall_feature_path.format(phase), dtype={'user_id': np.str, 'item_id': np.str})
+            print('load recall features: phase:{} shape:{}'.format(phase, recall_feature_df.shape[0]))
         else:
             # featuring
             recall_feature_df = do_featuring(all_phase_click_no_qtime, recall_sample_df, hot_df, conf.process_num, item_txt_embedding_dim, is_recall=True)
