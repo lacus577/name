@@ -141,3 +141,13 @@ def transfer_user_features_df2dict(user_features, dim):
     user_features_dict['img_vec'] = dict(zip(user_key, img_vec))
 
     return user_features_dict
+
+def save_pre_as_submit_format_csv(data_df, out_y):
+    # 构造submit格式csv
+    valid_eval_data = data_df[['user_id', 'item_id']]
+    valid_eval_data['pred_prob'] = out_y
+    valid_eval_data['rank'] = valid_eval_data.groupby(['user_id'])['pred_prob'].rank(ascending=False, method='first')
+    valid_eval_data.sort_values(['rank'], inplace=True)
+
+    valid_submit = valid_eval_data.groupby(['user_id'])['item_id'].agg(lambda x: ','.join(list(x))).reset_index()
+    return valid_submit

@@ -8,8 +8,41 @@ import sys
 import time
 from collections import defaultdict
 
-import numpy as np
+from pymodule import utils
 
+import numpy as np
+import pandas as pd
+
+def make_answer(df, hot_df, phase=-1):
+    df = df[['user_id', 'item_id']]
+    df['phase_id'] = phase
+    df = df.merge(hot_df, on='item_id', how='left')
+    df = df[['phase_id', 'user_id', 'item_id', 'item_deg']]
+    return df
+
+def my_eval(pre_y, valid_df, answer, phase=-1):
+    # 构造submit csv
+    valid_submit = utils.save_pre_as_submit_format_csv(valid_df, pre_y)
+    submit_csv_path = utils.save(valid_submit, file_dir='./cache/tmp_phase_submit')
+
+    # 构造truth csv
+    valid_answer = valid_df.loc[:, ['user_id']].drop_duplicates(['user_id'], keep='first')
+    # answer中user列唯一、item列也是唯一
+    valid_answer = valid_answer.merge(answer, on='user_id', how='left')
+    valid_answer_save_path = './cache/tmp_phase_submit/valid_answer.csv'
+    valid_answer = valid_answer[['phase_id', 'user_id', 'item_id', 'item_deg']]
+    valid_answer.to_csv(valid_answer_save_path, index=False, header=False)
+
+    score, \
+    ndcg_50_full, ndcg_50_half, \
+    hitrate_50_full, hitrate_50_half = evaluate(submit_csv_path, valid_answer_save_path,
+                                                recall_num=50)  # todo 跑全量数据改成50
+
+    print(
+        'phase:{}, score:{}, ndcg_50_full:{}, ndcg_50_half:{}, hitrate_50_full:{}, hitrate_50_half:{}'.format(
+            phase, score, ndcg_50_full, ndcg_50_half, hitrate_50_full, hitrate_50_half
+        )
+    )
 
 # submit_fname is the path to the file submitted by the participants.
 # debias_track_answer.csv is the standard answer, which is not released.
