@@ -174,7 +174,7 @@ if __name__ == '__main__':
     # submit = train_model_rf(train_test, recall_rate=1, hot_list=hot_list, valid=0.2, topk=50)
     model = rank_rf(train_x, train_y)
     # model = rank_xgb(train_x, train_y)
-    print('train set: auc:{}', roc_auc_score(train_y, model.predict_proba(train_x)[:, 1]))
+    print('train set: auc:{}'.format(roc_auc_score(train_y, model.predict_proba(train_x)[:, 1])))
     with open('./cache/rf.pickle', 'wb') as f:
         pickle.dump(model, f)
 
@@ -183,13 +183,13 @@ if __name__ == '__main__':
     time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     pre_y = model.predict_proba(valid_x)[:, 1]
     print('valid set: auc:{}'.format(roc_auc_score(valid_y, pre_y)))
-    answer = make_answer(valid_df[valid_df['label'] == 1], hot_df)
+    answer = make_answer(valid_df[valid_df['label'] == 1], hot_df, phase=1)
     my_eval(pre_y, valid_df, answer)
 
 
-    ''' qtime 提交集 特征 '''
-    for phase in range(0, conf.now_phase + 1):
-        pass
+    # ''' qtime 提交集 特征 '''
+    # for phase in range(0, conf.now_phase + 1):
+    #     pass
 
     print('------------------------ underexpose_test_qtime 预测 start time:{}'.format(time_str))
     submit_all = pd.DataFrame()
@@ -211,8 +211,8 @@ if __name__ == '__main__':
             one_phase_recall_item_df = one_phase_recall_item_df.groupby('user_id').head(50).reset_index(drop=True)
 
             # sample 构造
-            recall_sample_df = get_recall_sample(sample_df, one_phase_recall_item_df, item_info_df)
-            recall_sample_df.to_csv(conf.recall_sample_path, index=False)
+            recall_sample_df = get_recall_sample(sample_df, one_phase_recall_item_df, item_info_df, item_txt_embedding_dim)
+            recall_sample_df.to_csv(conf.recall_sample_path.format(phase), index=False)
 
         if conf.is_recall_feature_cached:
             recall_feature_df = pd.read_csv(conf.recall_feature_path.format(phase), dtype={'user_id': np.str, 'item_id': np.str})

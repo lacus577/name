@@ -243,6 +243,7 @@ def cal_sim_(user_features, item_features):
     return my_cos_sim(user_vector, item_vector)
 
 def cal_user_item_sim(user_item_df):
+    print(user_item_df.columns)
     user_item_df['txt_embedding_sim'] = np.nan
     user_item_df.loc[:, 'txt_embedding_sim'] = user_item_df.apply(
         lambda x: my_cos_sim(
@@ -336,7 +337,7 @@ def cal_click_sim(df, item_user_emb, user_item_emb, process_num):
 
     return temp_train_data
 
-def train_test_split(total_features, percentage=0.8):
+def train_test_split(total_features, percentage=0.7):
     # 训练集、验证集、提交集划分
     # # todo test集合没用于训练，后续可以考虑加上一起训练
     # train_valid_data = total_features[total_features['train_or_test'] == 'train']
@@ -353,7 +354,21 @@ def train_test_split(total_features, percentage=0.8):
     df_train_0, df_train_1 = df.iloc[:cut_idx], df.iloc[cut_idx:]
 
     train_data = df_train_0.merge(total_features, on=['user_id'], how='left')
-    valid_data = df_train_1.merge(total_features, on=['user_id'], how='left')
+    tmp_valid_data = df_train_1.merge(total_features, on=['user_id'], how='left')
+
+    # valid_data_len = tmp_valid_data.shape[0]
+    # valid_data = tmp_valid_data[tmp_valid_data['label'] == 1]
+    # negative_len = (valid_data_len - valid_data.shape[0]) // valid_data.shape[0]
+    # valid_data = valid_data.drop_duplicates(['user_id'], keep='last')
+    # valid_data = valid_data.append(
+    #     tmp_valid_data[tmp_valid_data['label'] != 1].sample(n_samples=negative_len, random_state=1)
+    # )
+
+    # 验证集中每个user只保留一个label为1的正样本
+    valid_data = tmp_valid_data.groupby('user_id').head(6)
+    assert 1 == np.sum(valid_data['label'] == 1)
+    tmp_valid_data = tmp_valid_data.append(valid_data).drop_duplicates(['user_id', 'item_id', 'label'], keep=False)
+    train_data = train_data.append(tmp_valid_data)
 
     return train_data, valid_data
 
@@ -620,8 +635,6 @@ def make_samples(start_index, sample_list, item_info_dict, negative_sample_dict)
         item = sample_list[i][1]
         # user_txt_embedding = np.nansum([item_info_dict['txt_vec'].get(j) for j in sample_list[i][2: ]], axis=0)
         # user_img_embedding = np.nansum([item_info_dict['img_vec'].get(j) for j in sample_list[i][2: ]], axis=0)
-        # user_txt_embedding = np.nansum([item_info_dict['txt_vec'].get(j) for j in sample_list[i][2: ]], axis=0)
-        # user_img_embedding = np.nansum([item_info_dict['img_vec'].get(j) for j in sample_list[i][2: ]], axis=0)
         user_txt_embedding = np.zeros(list(item_info_dict['txt_vec'].values())[0].shape)
         user_img_embedding = np.zeros(list(item_info_dict['img_vec'].values())[0].shape)
         for item_id in sample_list[i][2:]:
@@ -695,7 +708,7 @@ def do_featuring(
     # 每计算好一个特征就缓存下来
     features_df = cal_txt_img_sim(sample_df, process_num)
     features_df.to_csv(conf.features_cache_path, index=False)
-    print(features_df)
+    # print(features_df)
 
 
     '''
@@ -834,7 +847,7 @@ def click_embedding(click_info_df, dim):
 
     return dict_embedding_all_ui_item, dict_embedding_all_ui_user
 
-def get_recall_sample(total_sample_df, df, item_info_df):
+def get_recall_sample(total_sample_df, df, item_info_df, dim):
     positive_sample_df = total_sample_df[total_sample_df['label'] == 1]
     positive_sample_df = positive_sample_df.drop_duplicates(['user_id']).reset_index(drop=True)
     # pd.DataFrame().drop_duplicates()
@@ -842,16 +855,24 @@ def get_recall_sample(total_sample_df, df, item_info_df):
     user_img_vec_dict = dict(zip(positive_sample_df['user_id'], positive_sample_df['user_img_vec']))
 
     df['user_txt_vec'] = df.apply(
-        lambda x: user_txt_vec_dict[x['user_id']],
+        lambda x: user_txt_vec_dict.get(x['user_id']),
         axis=1
     )
 
     df['user_img_vec'] = df.apply(
-        lambda x: user_img_vec_dict[x['user_id']],
+        lambda x: user_img_vec_dict.get(x['user_id']),
         axis=1
     )
 
-    df = df.merge(item_info_df, on='item_id', how='left')
+    item_info_dict = utils.transfer_item_features_df2dict(item_info_df, dim)
+    df['item_txt_vec'] = df.apply(
+        lambda x: item_info_dict['txt_vec'].get(x['item_id']),
+        axis=1
+    )
+    df['item_img_vec'] = df.apply(
+        lambda x: item_info_dict['img_vec'].get(x['item_id']),
+        axis=1
+    )
 
     return df
 
