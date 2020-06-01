@@ -366,7 +366,8 @@ def train_test_split(total_features, percentage=0.7):
 
     # 验证集中每个user只保留一个label为1的正样本
     valid_data = tmp_valid_data.groupby('user_id').head(6)
-    assert 1 == np.sum(valid_data['label'] == 1)
+    # assert 1 == np.sum(valid_data['label'] == 1)
+    assert len(set(valid_data['user_id'])) == valid_data[valid_data['label'] == 1].shape[0]
     tmp_valid_data = tmp_valid_data.append(valid_data).drop_duplicates(['user_id', 'item_id', 'label'], keep=False)
     train_data = train_data.append(tmp_valid_data)
 
@@ -677,7 +678,8 @@ def do_featuring(
         hot_df_in,
         process_num,
         dim,
-        is_recall
+        is_recall,
+        feature_caching_path
 ):
     """
 
@@ -711,7 +713,7 @@ def do_featuring(
 
     # 每计算好一个特征就缓存下来
     features_df = cal_txt_img_sim(sample_df, process_num)
-    features_df.to_csv(conf.features_cache_path, index=False)
+    features_df.to_csv(feature_caching_path, index=False)
     # print(features_df)
 
 
@@ -731,7 +733,7 @@ def do_featuring(
     features_df = cal_click_sim(
         features_df, dict_embedding_all_ui_item, dict_embedding_all_ui_user, process_num
     )
-    features_df.to_csv(conf.features_cache_path, index=False)
+    features_df.to_csv(feature_caching_path, index=False)
 
     print(features_df.columns)
     print(features_df.iloc[:5, :])
@@ -761,12 +763,12 @@ def do_featuring(
     # todo qtime的user由于被删除掉未来的点击，所以统计出来的点击次数肯定少
     features_df['user_click_num'] = features_df.apply(
         lambda x: user_click_dict[x['user_id']] if user_click_dict.get(x['user_id']) else 0, axis=1)
-    features_df.to_csv(conf.features_cache_path, index=False)
+    features_df.to_csv(feature_caching_path, index=False)
 
     ''' 本item在全局的热度：先使用全量数据集统计，调优的时候分在train、test、item-feature中的热度 '''
     print('item在全局的热度 doing')
     features_df = features_df.merge(hot_df_in, on='item_id', how='left')
-    features_df.to_csv(conf.features_cache_path, index=False)
+    features_df.to_csv(feature_caching_path, index=False)
 
     ''' user点击序中item平均热度、最大热度、最小热度 -- 先不分train和test即使用全量数据集统计，调优的时候再分 '''
     print('user点击序中item平均热度、最大热度、最小热度 doing')
@@ -795,7 +797,7 @@ def do_featuring(
                 x['user_id']) is not None else np.nan,
             axis=1
         )
-    features_df.to_csv(conf.features_cache_path, index=False)
+    features_df.to_csv(feature_caching_path, index=False)
 
 
     ''' user平均点击间隔、最大点击间隔、最小点击间隔 -- 需要分train和test两个集合统计 '''
@@ -828,10 +830,10 @@ def do_featuring(
                 x['user_id']) is not None else np.nan,
             axis=1
         )
-    features_df.to_csv(conf.features_cache_path, index=False)
+    features_df.to_csv(feature_caching_path, index=False)
 
     features_df = process_after_featuring(features_df, is_recall)
-    features_df.to_csv(conf.features_cache_path, index=False)
+    features_df.to_csv(feature_caching_path, index=False)
     print(features_df.iloc[:5, :])
 
 

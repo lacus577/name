@@ -190,7 +190,10 @@ if __name__ == '__main__':
         )
         print('load features, shape:{}'.format(feature_df.shape))
     else:
-        feature_df = do_featuring(all_phase_click_no_qtime, sample_df, hot_df, conf.process_num, item_txt_embedding_dim, is_recall=False)
+        feature_df = do_featuring(
+            all_phase_click_no_qtime, sample_df, hot_df, conf.process_num,
+            item_txt_embedding_dim, is_recall=False, feature_caching_path=conf.features_cache_path
+        )
 
     assert sample_df.shape[0] == feature_df.shape[0]
     assert len(set(sample_df['user_id'])) == len(set(feature_df['user_id']))
@@ -258,7 +261,10 @@ if __name__ == '__main__':
             print('load recall features: phase:{} shape:{}'.format(phase, recall_feature_df.shape[0]))
         else:
             # featuring
-            recall_feature_df = do_featuring(all_phase_click_no_qtime, recall_sample_df, hot_df, conf.process_num, item_txt_embedding_dim, is_recall=True)
+            recall_feature_df = do_featuring(
+                all_phase_click_no_qtime, recall_sample_df, hot_df, conf.process_num,
+                item_txt_embedding_dim, is_recall=True, feature_caching_path=conf.recall_feature_path.format(phase)
+            )
 
         submit_x = recall_feature_df[recall_feature_df.columns.difference(['user_id', 'item_id', 'label'])].values
         submit_pre_y = model.predict_proba(submit_x)[:, 1]
