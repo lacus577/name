@@ -152,7 +152,6 @@ if __name__ == '__main__':
     hot_df = all_phase_click_666.groupby('item_id')['user_id'].count().reset_index()
     hot_df.columns = ['item_id', 'item_deg']
 
-
     if conf.is_samples_cached:
         sample_df = pd.read_csv(conf.samples_cache_path, dtype={'user_id': np.str, 'item_id': np.str})
         if conf.subsampling:
@@ -189,7 +188,7 @@ if __name__ == '__main__':
             dtype={'user_id': np.str, 'item_id': np.str}
         )
     else:
-        feature_df = do_featuring(all_phase_click_no_qtime, sample_df, hot_df, conf.process_num, item_txt_embedding_dim)
+        feature_df = do_featuring(all_phase_click_no_qtime, sample_df, hot_df, conf.process_num, item_txt_embedding_dim, is_recall=False)
 
     ''' 训练集/验证集划分 '''
     train_df, valid_df = train_test_split(feature_df)
@@ -230,7 +229,9 @@ if __name__ == '__main__':
         if conf.is_recall_cached:
             one_phase_recall_item_df = \
                 pd.read_csv(conf.recall_cache_path.format(phase), dtype={'user_id': np.str, 'item_id': np.str})
-            print('phase:{} shape:{}'.format(phase, one_phase_recall_item_df.shape[0]))
+            if conf.subsampling:
+                one_phase_recall_item_df = utils.subsampling_user(one_phase_recall_item_df, conf.subsampling)
+            print('load recall item: phase:{} shape:{}'.format(phase, one_phase_recall_item_df.shape[0]))
         else:
             raise Exception('召回结果文件不存在')
 
@@ -242,6 +243,7 @@ if __name__ == '__main__':
                 one_phase_recall_item_df.sort_values(['user_id', 'itemcf_score'], ascending=False).reset_index(drop=True)
             one_phase_recall_item_df = one_phase_recall_item_df.groupby('user_id').head(50).reset_index(drop=True)
 
+            print(one_phase_recall_item_df.shape)
             # sample 构造
             recall_sample_df = get_recall_sample(sample_df, one_phase_recall_item_df, item_info_df, item_txt_embedding_dim)
             recall_sample_df.to_csv(conf.recall_sample_path.format(phase), index=False)
@@ -250,7 +252,7 @@ if __name__ == '__main__':
             recall_feature_df = pd.read_csv(conf.recall_feature_path.format(phase), dtype={'user_id': np.str, 'item_id': np.str})
         else:
             # featuring
-            recall_feature_df = do_featuring(all_phase_click_no_qtime, recall_sample_df, hot_df, conf.process_num, item_txt_embedding_dim)
+            recall_feature_df = do_featuring(all_phase_click_no_qtime, recall_sample_df, hot_df, conf.process_num, item_txt_embedding_dim, is_recall=True)
 
         submit_x = recall_feature_df[recall_feature_df.columns.difference(['user_id', 'item_id', 'label'])].values
         submit_pre_y = model.predict_proba(submit_x)[:, 1]

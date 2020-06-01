@@ -518,7 +518,7 @@ def cal_total_statistic_features(df_dict, total_df, process_num, process_func_di
     return result_list
 
 
-def process_after_featuring(df):
+def process_after_featuring(df, is_recall=False):
     '''
 
     :param train_data:
@@ -546,7 +546,10 @@ def process_after_featuring(df):
                         'user_click_interval_min', 'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
                         'user_item_min_deg', 'user_item_max_deg']
 
-    df = df[features_columns + ['label']]
+    if is_recall:
+        df = df[features_columns]
+    else:
+       df = df[features_columns + ['label']]
 
     return df
 
@@ -673,7 +676,8 @@ def do_featuring(
         sample_df,
         hot_df_in,
         process_num,
-        dim
+        dim,
+        is_recall
 ):
     """
 
@@ -775,11 +779,22 @@ def do_featuring(
     user_item_hot_dict = utils.two_columns_df2dict(user_item_hot_df)
 
     features_df['user_item_mean_deg'] = \
-        features_df.apply(lambda x: np.nanmean(user_item_hot_dict[x['user_id']]), axis=1)
+        features_df.apply(
+            lambda x: np.nanmean(user_item_hot_dict.get(x['user_id'])) if user_item_hot_dict.get(x['user_id']) is not None else np.nan,
+            axis=1
+        )
     features_df['user_item_min_deg'] = \
-        features_df.apply(lambda x: np.nanmin(user_item_hot_dict[x['user_id']]), axis=1)
+        features_df.apply(
+            lambda x: np.nanmin(user_item_hot_dict.get(x['user_id'])) if user_item_hot_dict.get(
+                x['user_id']) is not None else np.nan,
+            axis=1
+        )
     features_df['user_item_max_deg'] = \
-        features_df.apply(lambda x: np.nanmax(user_item_hot_dict[x['user_id']]), axis=1)
+        features_df.apply(
+            lambda x: np.nanmax(user_item_hot_dict.get(x['user_id'])) if user_item_hot_dict.get(
+                x['user_id']) is not None else np.nan,
+            axis=1
+        )
     features_df.to_csv(conf.features_cache_path, index=False)
 
 
@@ -796,14 +811,26 @@ def do_featuring(
     train_time_interval_dict = utils.two_columns_df2dict(train_time_interval_df)
 
     features_df['user_click_interval_mean'] = \
-        features_df.apply(lambda x: np.nanmean(train_time_interval_dict[x['user_id']]), axis=1)
+        features_df.apply(
+            lambda x: np.nanmean(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
+                x['user_id']) is not None else np.nan,
+            axis=1
+        )
     features_df['user_click_interval_min'] = \
-        features_df.apply(lambda x: np.nanmin(train_time_interval_dict[x['user_id']]), axis=1)
+        features_df.apply(
+            lambda x: np.nanmin(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
+                x['user_id']) is not None else np.nan,
+            axis=1
+        )
     features_df['user_click_interval_max'] = \
-        features_df.apply(lambda x: np.nanmax(train_time_interval_dict[x['user_id']]), axis=1)
+        features_df.apply(
+            lambda x: np.nanmax(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
+                x['user_id']) is not None else np.nan,
+            axis=1
+        )
     features_df.to_csv(conf.features_cache_path, index=False)
 
-    features_df = process_after_featuring(features_df)
+    features_df = process_after_featuring(features_df, is_recall)
     features_df.to_csv(conf.features_cache_path, index=False)
     print(features_df.iloc[:5, :])
 
