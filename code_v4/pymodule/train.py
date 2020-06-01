@@ -109,36 +109,45 @@ if __name__ == '__main__':
         axis=1
     )
 
-    all_phase_click_org = pd.DataFrame()
-    for phase in range(0, conf.now_phase + 1):
-        one_phase_train_click = utils.read_train_click(conf.train_path, phase)
-        one_phase_test_click = utils.read_test_click(conf.test_path, phase)
-        one_phase_qtime = utils.read_qtime(conf.test_path, phase)
+    if conf.is_click_cached:
+        all_phase_click_666 = pd.read_csv(conf.click_cache_path, dtype={'user_id': np.str, 'item_id': np.str})
+        ''' sampling '''
+        if conf.subsampling:
+            all_phase_click_666 = utils.subsampling_user(all_phase_click_666, conf.subsampling)
+        print('load all click, shape:{}'.format(all_phase_click_666.shape))
+    else:
+        all_phase_click_org = pd.DataFrame()
+        for phase in range(0, conf.now_phase + 1):
+            one_phase_train_click = utils.read_train_click(conf.train_path, phase)
+            one_phase_test_click = utils.read_test_click(conf.test_path, phase)
+            one_phase_qtime = utils.read_qtime(conf.test_path, phase)
 
-        one_phase_test_click['phase'] = str(phase)
-        one_phase_test_click['train_or_test'] = 'test'
-        one_phase_train_click['phase'] = str(phase)
-        one_phase_train_click['train_or_test'] = 'train'
-        one_phase_qtime['phase'] = str(phase)
-        one_phase_qtime['train_or_test'] = 'predict'
-        one_phase_qtime['item_id'] = np.nan
+            one_phase_test_click['phase'] = str(phase)
+            one_phase_test_click['train_or_test'] = 'test'
+            one_phase_train_click['phase'] = str(phase)
+            one_phase_train_click['train_or_test'] = 'train'
+            one_phase_qtime['phase'] = str(phase)
+            one_phase_qtime['train_or_test'] = 'predict'
+            one_phase_qtime['item_id'] = np.nan
 
-        all_phase_click_org = all_phase_click_org.append(one_phase_train_click).reset_index(drop=True)
-        all_phase_click_org = all_phase_click_org.append(one_phase_test_click).reset_index(drop=True)
-        all_phase_click_org = all_phase_click_org.append(one_phase_qtime).reset_index(drop=True)
+            all_phase_click_org = all_phase_click_org.append(one_phase_train_click).reset_index(drop=True)
+            all_phase_click_org = all_phase_click_org.append(one_phase_test_click).reset_index(drop=True)
+            all_phase_click_org = all_phase_click_org.append(one_phase_qtime).reset_index(drop=True)
 
-    ''' sampling '''
-    if conf.subsampling:
-        all_phase_click_org = utils.subsampling_user(all_phase_click_org, conf.subsampling)
+        ''' sampling '''
+        if conf.subsampling:
+            all_phase_click_org = utils.subsampling_user(all_phase_click_org, conf.subsampling)
 
-    # 删除重复点击
-    all_phase_click = utils.del_dup(all_phase_click_org)
-    # 删除待预测时间点 之后的点击数据 防止数据泄露
-    all_phase_click_666 = utils.del_qtime_future_click(all_phase_click)
-    # 时间处理 乘上 1591891140
-    all_phase_click_666 = utils.process_time(all_phase_click_666, 1591891140)
+        # 删除重复点击
+        all_phase_click = utils.del_dup(all_phase_click_org)
+        # 删除待预测时间点 之后的点击数据 防止数据泄露
+        all_phase_click_666 = utils.del_qtime_future_click(all_phase_click)
+        # 时间处理 乘上 1591891140
+        all_phase_click_666 = utils.process_time(all_phase_click_666, 1591891140)
 
-    all_phase_click_666 = all_phase_click_666.sort_values(['user_id', 'time']).reset_index(drop=True)
+        all_phase_click_666 = all_phase_click_666.sort_values(['user_id', 'time']).reset_index(drop=True)
+        all_phase_click_666.to_csv(conf.click_cache_path, index=False)
+
     all_phase_click_no_qtime = all_phase_click_666[all_phase_click_666['train_or_test'] != 'predict']
     hot_df = all_phase_click_666.groupby('item_id')['user_id'].count().reset_index()
     hot_df.columns = ['item_id', 'item_deg']

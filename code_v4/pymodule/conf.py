@@ -9,6 +9,9 @@ now_phase = 6
 ''' 样本采样个数 '''
 subsampling = 3
 
+''' 全量点击序 '''
+is_click_cached=False
+
 ''' 训练集、测试集 '''
 ''' 训练集、测试集样本是否已经缓存 '''
 is_samples_cached = True
@@ -30,6 +33,9 @@ MAX_CLICK_LEN = 500
 
 train_path = '../../../../data/underexpose_train'
 test_path = '../../../../data/underexpose_test'
+
+''' 全量点击序 '''
+click_cache_path = './cache/features_cache/click.csv'
 
 ''' 召回结果缓存路径 '''
 recall_cache_path = './cache/features_cache/test_user_recall_{}.csv'
