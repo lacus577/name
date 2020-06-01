@@ -223,7 +223,7 @@ def get_user_features(click_info, item_info_df, txt_dim, img_dim):
     return user_features
 
 def my_cos_sim(vec1, vec2):
-    if vec1 is None or vec2 is None:
+    if vec1 is None or vec1 is np.nan or vec2 is None or vec2 is np.nan:
         return np.nan
 
     assert len(vec1) == len(vec2)
