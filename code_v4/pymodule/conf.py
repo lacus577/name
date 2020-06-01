@@ -11,7 +11,7 @@ subsampling = 3
 
 ''' 训练集、测试集 '''
 ''' 训练集、测试集样本是否已经缓存 '''
-is_samples_cached = False
+is_samples_cached = True
 ''' 训练集、测试集特征是否已经缓存 '''
 is_feature_cached = False
 

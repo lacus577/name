@@ -146,6 +146,9 @@ if __name__ == '__main__':
 
     if conf.is_samples_cached:
         sample_df = pd.read_csv(conf.samples_cache_path, dtype={'user_id': np.str, 'item_id': np.str})
+        if conf.subsampling:
+            sample_df = sample_df[sample_df['user_id'].isin(all_phase_click_no_qtime['user_id'])]
+
         sample_df.loc[:, 'user_txt_vec'] = sample_df.apply(
             lambda x: np.array([np.float(i) for i in x['user_txt_vec'].split('[')[1].split(']')[0].split()])
             if x['user_txt_vec'] is not np.nan and x['user_txt_vec'] else x['user_txt_vec'],
