@@ -192,6 +192,8 @@ if __name__ == '__main__':
     else:
         feature_df = do_featuring(all_phase_click_no_qtime, sample_df, hot_df, conf.process_num, item_txt_embedding_dim, is_recall=False)
 
+    assert sample_df.shape[0] == feature_df.shape[0]
+    assert len(set(sample_df['user_id'])) == len(set(feature_df['user_id']))
     ''' 训练集/验证集划分 '''
     train_df, valid_df = train_test_split(feature_df)
     train_x = train_df[train_df.columns.difference(['user_id', 'item_id', 'label'])].values
