@@ -10,11 +10,11 @@ now_phase = 6
 subsampling = 3
 
 ''' 全量点击序 '''
-is_click_cached = True
+is_click_cached = False
 
 ''' 训练集、测试集 '''
 ''' 训练集、测试集样本是否已经缓存 '''
-is_samples_cached = True
+is_samples_cached = False
 ''' 训练集、测试集特征是否已经缓存 '''
 is_feature_cached = False
 
