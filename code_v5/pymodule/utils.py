@@ -172,9 +172,8 @@ def get_user2click_span_dict(df):
 
     return result_dict
 
-def get_user2total_deg_dict(df, hot_df):
-    tmp = df.merge(hot_df, on='item_id', how='left')
-    tmp = tmp.groupby('user_id').agg({'item_deg': lambda x: np.sum(list(x))}).reset_index()
+def get_user2total_deg_dict(df):
+    tmp = df.groupby('user_id').agg({'item_deg': lambda x: np.sum(list(x))}).reset_index()
 
     result_dict = dict(zip(tmp['user_id'], tmp['item_deg']))
 

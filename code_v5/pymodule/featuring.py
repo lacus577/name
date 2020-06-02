@@ -877,7 +877,7 @@ def do_featuring(
     features_df.to_csv(feature_caching_path, index=False)
 
     print('用户点击所有item的总热度 特征 doing')
-    user2total_deg_dict = utils.get_user2total_deg_dict(all_phase_click_in, hot_df_in)
+    user2total_deg_dict = utils.get_user2total_deg_dict(all_phase_click_in)
     features_df['user_total_deg'] = features_df.apply(
         lambda x: user2total_deg_dict.get(x['user_id']),
         axis=1
