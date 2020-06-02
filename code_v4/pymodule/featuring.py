@@ -694,134 +694,134 @@ def do_featuring(
     :return:
     """
 
-    # '''
-    # 官方特征:
-    # 1. user和item之间txt相似度
-    # 2. user和item之间img相似度
-    # '''
-    # time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-    # print('官方特征 start time:{}'.format(time_str))
-    #
-    # # 每计算好一个特征就缓存下来
-    # features_df = cal_txt_img_sim(sample_df, process_num)
-    # features_df.to_csv(feature_caching_path, index=False)
-    # # print(features_df)
-    #
-    #
-    # '''
-    # 点击序：
-    # 1. 纯item序列  -- 砍掉
-    # 2. item序列和对应user  -- 砍掉
-    # 3. 纯user序列  -- 砍掉
-    # 4. user序列和共同item  -- 砍掉
-    # 5. 2 带来的user和item相似度
-    # 6. 4 带来的user和item相似度
-    # '''
-    # time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-    # print('点击序embedding特征 start time:{}'.format(time_str))
-    # # todo 当前使用全量点击做的序列 --- > 一个session内的点击做序列
-    # dict_embedding_all_ui_item, dict_embedding_all_ui_user = click_embedding(all_phase_click_in, dim)
-    # features_df = cal_click_sim(
-    #     features_df, dict_embedding_all_ui_item, dict_embedding_all_ui_user, process_num
-    # )
-    # features_df.to_csv(feature_caching_path, index=False)
-    #
-    # '''
-    # 统计特征:
-    # 一阶特征：
-    #     user点击序中user点击次数（即 点击深度 TODO 去做个统计：点击深度和冷门物品偏好的关系） -- 全量数据集统计
-    #     user点击序中item平均热度、最大热度、最小热度 -- 先不分train和test即使用全量数据集统计，调优的时候再分
-    #     user平均点击间隔、最大点击间隔、最小点击间隔 -- 需要分train和test两个集合统计
-    #     本item在全局的热度：先使用全量数据集统计，调优的时候分在train、test、item-feature中的热度
-    # 二阶特征（样本中user和item交互）：
-    #     样本中user和item的距离--如果item在user点击序中则根据时间排序当做距离，否则设为最大距离（最近一个点击距离0）
-    #     ? 用户热度--用户点击序中所有item热度和
-    # '''
-    # time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-    # print('统计特征 start time:{}'.format(time_str))
-    #
-    # all_phase_click_in = all_phase_click_in.sort_values(['user_id', 'time'], ascending=False).reset_index(drop=True)
-    #
-    # ''' user点击序中user点击次数（即 点击深度 TODO 去做个统计：点击深度和冷门物品偏好的关系） -- 全量数据集统计 '''
-    # print('用户点击次数特征 doing')
-    # user_click_num_df = all_phase_click_in.groupby('user_id')['item_id'].count().reset_index()
-    # user_click_num_df.columns = ['user_id', 'user_click_num']
-    # user_click_dict = utils.two_columns_df2dict(user_click_num_df)
-    #
-    # # todo qtime的user由于被删除掉未来的点击，所以统计出来的点击次数肯定少
-    # features_df['user_click_num'] = features_df.apply(
-    #     lambda x: user_click_dict[x['user_id']] if user_click_dict.get(x['user_id']) else 0, axis=1)
-    # features_df.to_csv(feature_caching_path, index=False)
-    #
-    # ''' 本item在全局的热度：先使用全量数据集统计，调优的时候分在train、test、item-feature中的热度 '''
-    # print('item在全局的热度 doing')
-    # features_df = features_df.merge(hot_df_in, on='item_id', how='left')
-    # features_df.to_csv(feature_caching_path, index=False)
-    #
-    # ''' user点击序中item平均热度、最大热度、最小热度 -- 先不分train和test即使用全量数据集统计，调优的时候再分 '''
-    # print('user点击序中item平均热度、最大热度、最小热度 doing')
-    # all_phase_click_in = all_phase_click_in.merge(hot_df_in, on='item_id', how='left')
-    # user_item_hot_df = \
-    #     all_phase_click_in.groupby('user_id').agg({'item_deg': lambda x: ','.join([str(i) for i in list(x)])}).reset_index()
-    # user_item_hot_df.columns = ['user_id', 'item_hot_arr']
-    # user_item_hot_df['item_hot_arr'] = user_item_hot_df.apply(
-    #     lambda x: np.array(list(x['item_hot_arr'].split(',')), dtype=np.int), axis=1)
-    # user_item_hot_dict = utils.two_columns_df2dict(user_item_hot_df)
-    #
-    # features_df['user_item_mean_deg'] = \
-    #     features_df.apply(
-    #         lambda x: np.nanmean(user_item_hot_dict.get(x['user_id'])) if user_item_hot_dict.get(x['user_id']) is not None else np.nan,
-    #         axis=1
-    #     )
-    # features_df['user_item_min_deg'] = \
-    #     features_df.apply(
-    #         lambda x: np.nanmin(user_item_hot_dict.get(x['user_id'])) if user_item_hot_dict.get(
-    #             x['user_id']) is not None else np.nan,
-    #         axis=1
-    #     )
-    # features_df['user_item_max_deg'] = \
-    #     features_df.apply(
-    #         lambda x: np.nanmax(user_item_hot_dict.get(x['user_id'])) if user_item_hot_dict.get(
-    #             x['user_id']) is not None else np.nan,
-    #         axis=1
-    #     )
-    # features_df.to_csv(feature_caching_path, index=False)
-    #
-    #
-    # ''' user平均点击间隔、最大点击间隔、最小点击间隔 -- 需要分train和test两个集合统计 '''
-    # print('user平均点击间隔、最大点击间隔、最小点击间隔 doing')
-    # train_time_interval_df = \
-    #     all_phase_click_in.groupby('user_id').agg({'time': lambda x: ','.join([str(i) for i in list(x)])}).reset_index()
-    # train_time_interval_df.columns = ['user_id', 'time_interval_arr']
-    # train_time_interval_df['time_interval_arr'] = train_time_interval_df.apply(
-    #     lambda x: np.array(list(x['time_interval_arr'].split(',')), dtype=np.float)[:-1] -
-    #               np.array(list(x['time_interval_arr'].split(',')), dtype=np.float)[1:],
-    #     axis=1
-    # )
-    # train_time_interval_dict = utils.two_columns_df2dict(train_time_interval_df)
-    #
-    # features_df['user_click_interval_mean'] = \
-    #     features_df.apply(
-    #         lambda x: np.nanmean(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
-    #             x['user_id']) is not None else np.nan,
-    #         axis=1
-    #     )
-    # features_df['user_click_interval_min'] = \
-    #     features_df.apply(
-    #         lambda x: np.nanmin(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
-    #             x['user_id']) is not None else np.nan,
-    #         axis=1
-    #     )
-    # features_df['user_click_interval_max'] = \
-    #     features_df.apply(
-    #         lambda x: np.nanmax(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
-    #             x['user_id']) is not None else np.nan,
-    #         axis=1
-    #     )
-    # features_df.to_csv(feature_caching_path, index=False)
+    '''
+    官方特征:
+    1. user和item之间txt相似度
+    2. user和item之间img相似度
+    '''
+    time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    print('官方特征 start time:{}'.format(time_str))
+
+    # 每计算好一个特征就缓存下来
+    features_df = cal_txt_img_sim(sample_df, process_num)
+    features_df.to_csv(feature_caching_path, index=False)
+    # print(features_df)
+
+
+    '''
+    点击序：
+    1. 纯item序列  -- 砍掉
+    2. item序列和对应user  -- 砍掉
+    3. 纯user序列  -- 砍掉
+    4. user序列和共同item  -- 砍掉
+    5. 2 带来的user和item相似度
+    6. 4 带来的user和item相似度
+    '''
+    time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    print('点击序embedding特征 start time:{}'.format(time_str))
+    # todo 当前使用全量点击做的序列 --- > 一个session内的点击做序列
+    dict_embedding_all_ui_item, dict_embedding_all_ui_user = click_embedding(all_phase_click_in, dim)
+    features_df = cal_click_sim(
+        features_df, dict_embedding_all_ui_item, dict_embedding_all_ui_user, process_num
+    )
+    features_df.to_csv(feature_caching_path, index=False)
+
+    '''
+    统计特征:
+    一阶特征：
+        user点击序中user点击次数（即 点击深度 TODO 去做个统计：点击深度和冷门物品偏好的关系） -- 全量数据集统计
+        user点击序中item平均热度、最大热度、最小热度 -- 先不分train和test即使用全量数据集统计，调优的时候再分
+        user平均点击间隔、最大点击间隔、最小点击间隔 -- 需要分train和test两个集合统计
+        本item在全局的热度：先使用全量数据集统计，调优的时候分在train、test、item-feature中的热度
+    二阶特征（样本中user和item交互）：
+        样本中user和item的距离--如果item在user点击序中则根据时间排序当做距离，否则设为最大距离（最近一个点击距离0）
+        ? 用户热度--用户点击序中所有item热度和
+    '''
+    time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    print('统计特征 start time:{}'.format(time_str))
+
+    all_phase_click_in = all_phase_click_in.sort_values(['user_id', 'time'], ascending=False).reset_index(drop=True)
+
+    ''' user点击序中user点击次数（即 点击深度 TODO 去做个统计：点击深度和冷门物品偏好的关系） -- 全量数据集统计 '''
+    print('用户点击次数特征 doing')
+    user_click_num_df = all_phase_click_in.groupby('user_id')['item_id'].count().reset_index()
+    user_click_num_df.columns = ['user_id', 'user_click_num']
+    user_click_dict = utils.two_columns_df2dict(user_click_num_df)
+
+    # todo qtime的user由于被删除掉未来的点击，所以统计出来的点击次数肯定少
+    features_df['user_click_num'] = features_df.apply(
+        lambda x: user_click_dict[x['user_id']] if user_click_dict.get(x['user_id']) else 0, axis=1)
+    features_df.to_csv(feature_caching_path, index=False)
+
+    ''' 本item在全局的热度：先使用全量数据集统计，调优的时候分在train、test、item-feature中的热度 '''
+    print('item在全局的热度 doing')
+    features_df = features_df.merge(hot_df_in, on='item_id', how='left')
+    features_df.to_csv(feature_caching_path, index=False)
+
+    ''' user点击序中item平均热度、最大热度、最小热度 -- 先不分train和test即使用全量数据集统计，调优的时候再分 '''
+    print('user点击序中item平均热度、最大热度、最小热度 doing')
+    all_phase_click_in = all_phase_click_in.merge(hot_df_in, on='item_id', how='left')
+    user_item_hot_df = \
+        all_phase_click_in.groupby('user_id').agg({'item_deg': lambda x: ','.join([str(i) for i in list(x)])}).reset_index()
+    user_item_hot_df.columns = ['user_id', 'item_hot_arr']
+    user_item_hot_df['item_hot_arr'] = user_item_hot_df.apply(
+        lambda x: np.array(list(x['item_hot_arr'].split(',')), dtype=np.int), axis=1)
+    user_item_hot_dict = utils.two_columns_df2dict(user_item_hot_df)
+
+    features_df['user_item_mean_deg'] = \
+        features_df.apply(
+            lambda x: np.nanmean(user_item_hot_dict.get(x['user_id'])) if user_item_hot_dict.get(x['user_id']) is not None else np.nan,
+            axis=1
+        )
+    features_df['user_item_min_deg'] = \
+        features_df.apply(
+            lambda x: np.nanmin(user_item_hot_dict.get(x['user_id'])) if user_item_hot_dict.get(
+                x['user_id']) is not None else np.nan,
+            axis=1
+        )
+    features_df['user_item_max_deg'] = \
+        features_df.apply(
+            lambda x: np.nanmax(user_item_hot_dict.get(x['user_id'])) if user_item_hot_dict.get(
+                x['user_id']) is not None else np.nan,
+            axis=1
+        )
+    features_df.to_csv(feature_caching_path, index=False)
+
+
+    ''' user平均点击间隔、最大点击间隔、最小点击间隔 -- 需要分train和test两个集合统计 '''
+    print('user平均点击间隔、最大点击间隔、最小点击间隔 doing')
+    train_time_interval_df = \
+        all_phase_click_in.groupby('user_id').agg({'time': lambda x: ','.join([str(i) for i in list(x)])}).reset_index()
+    train_time_interval_df.columns = ['user_id', 'time_interval_arr']
+    train_time_interval_df['time_interval_arr'] = train_time_interval_df.apply(
+        lambda x: np.array(list(x['time_interval_arr'].split(',')), dtype=np.float)[:-1] -
+                  np.array(list(x['time_interval_arr'].split(',')), dtype=np.float)[1:],
+        axis=1
+    )
+    train_time_interval_dict = utils.two_columns_df2dict(train_time_interval_df)
+
+    features_df['user_click_interval_mean'] = \
+        features_df.apply(
+            lambda x: np.nanmean(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
+                x['user_id']) is not None else np.nan,
+            axis=1
+        )
+    features_df['user_click_interval_min'] = \
+        features_df.apply(
+            lambda x: np.nanmin(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
+                x['user_id']) is not None else np.nan,
+            axis=1
+        )
+    features_df['user_click_interval_max'] = \
+        features_df.apply(
+            lambda x: np.nanmax(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
+                x['user_id']) is not None else np.nan,
+            axis=1
+        )
+    features_df.to_csv(feature_caching_path, index=False)
 
     # todo
-    features_df = pd.read_csv(feature_caching_path, dtype={'user_id': np.str, 'item_id': np.str})
+    # features_df = pd.read_csv(feature_caching_path, dtype={'user_id': np.str, 'item_id': np.str})
 
     '''
     itemCF相似度：
