@@ -735,9 +735,6 @@ def do_featuring(
     )
     features_df.to_csv(feature_caching_path, index=False)
 
-    print(features_df.columns)
-    print(features_df.iloc[:5, :])
-
     '''
     统计特征:
     一阶特征：
