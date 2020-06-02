@@ -244,7 +244,6 @@ def cal_sim_(user_features, item_features):
     return my_cos_sim(user_vector, item_vector)
 
 def cal_user_item_sim(user_item_df):
-    print(user_item_df.columns)
     user_item_df['txt_embedding_sim'] = np.nan
     user_item_df.loc[:, 'txt_embedding_sim'] = user_item_df.apply(
         lambda x: my_cos_sim(
