@@ -235,7 +235,9 @@ if __name__ == '__main__':
         print('----------------------- phase:{} -------------------------'.format(phase))
         if conf.is_recall_cached:
             one_phase_recall_item_df = \
-                pd.read_csv(conf.recall_cache_path.format(phase), dtype={'user_id': np.str, 'item_id': np.str})
+                pd.read_csv(conf.recall_cache_path.format(phase), dtype={'user_id': np.int, 'item_id': np.int})
+            one_phase_recall_item_df.loc[:, 'user_id'] = one_phase_recall_item_df['user_id'].astype(np.str)
+            one_phase_recall_item_df.loc[:, 'item_id'] = one_phase_recall_item_df['item_id'].astype(np.str)
             if conf.subsampling:
                 one_phase_recall_item_df = utils.subsampling_user(one_phase_recall_item_df, conf.subsampling)
             print('load recall items: phase:{} shape:{}'.format(phase, one_phase_recall_item_df.shape[0]))
@@ -244,6 +246,28 @@ if __name__ == '__main__':
 
         if conf.is_recall_sample_cached:
             recall_sample_df = pd.read_csv(conf.recall_sample_path.format(phase), dtype={'user_id': np.str, 'item_id': np.str})
+
+            recall_sample_df.loc[:, 'user_txt_vec'] = recall_sample_df.apply(
+                lambda x: np.array([np.float(i) for i in x['user_txt_vec'].split('[')[1].split(']')[0].split()])
+                if x['user_txt_vec'] is not np.nan and x['user_txt_vec'] else x['user_txt_vec'],
+                axis=1
+            )
+            recall_sample_df.loc[:, 'user_img_vec'] = recall_sample_df.apply(
+                lambda x: np.array([np.float(i) for i in x['user_img_vec'].split('[')[1].split(']')[0].split()])
+                if x['user_img_vec'] is not np.nan and x['user_img_vec'] else x['user_img_vec'],
+                axis=1
+            )
+            recall_sample_df.loc[:, 'item_txt_vec'] = recall_sample_df.apply(
+                lambda x: np.array([np.float(i) for i in x['item_txt_vec'].split('[')[1].split(']')[0].split()])
+                if x['item_txt_vec'] is not np.nan and x['item_txt_vec'] else x['item_txt_vec'],
+                axis=1
+            )
+            recall_sample_df.loc[:, 'item_img_vec'] = recall_sample_df.apply(
+                lambda x: np.array([np.float(i) for i in x['item_img_vec'].split('[')[1].split(']')[0].split()])
+                if x['item_img_vec'] is not np.nan and x['item_img_vec'] else x['item_img_vec'],
+                axis=1
+            )
+
             print('load recall samples: phase:{} shape:{}'.format(phase, recall_sample_df.shape[0]))
         else:
             # 取前50rank
