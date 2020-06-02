@@ -248,7 +248,7 @@ if __name__ == '__main__':
         else:
             # 取前50rank
             one_phase_recall_item_df = \
-                one_phase_recall_item_df.sort_values(['user_id', 'itemcf_score'], ascending=False).reset_index(drop=True)
+                one_phase_recall_item_df.sort_values(['user_id', conf.ITEM_CF_SCORE], ascending=False).reset_index(drop=True)
             one_phase_recall_item_df = one_phase_recall_item_df.groupby('user_id').head(50).reset_index(drop=True)
 
             print(one_phase_recall_item_df.shape)
