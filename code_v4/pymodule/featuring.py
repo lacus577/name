@@ -537,16 +537,18 @@ def process_after_featuring(df, is_recall=False):
     #    'user_click_num', 'user_click_interval_mean', 'user_click_interval_min',
     #    'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
     #    'user_item_min_deg', 'user_item_max_deg']
-    # features_columns = ['user_id', 'item_id',
-    #                     'itemcf_score', 'txt_embedding_sim', 'img_embedding_sim', 'click_item_user_sim',
-    #                     'click_user_item_sim', 'item_distance', 'user_click_num', 'user_click_interval_mean',
-    #                     'user_click_interval_min', 'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
-    #                     'user_item_min_deg', 'user_item_max_deg']
-    features_columns = ['user_id', 'item_id',
-                        'txt_embedding_sim', 'img_embedding_sim', 'click_item_user_sim',
-                        'click_user_item_sim', 'user_click_num', 'user_click_interval_mean',
-                        'user_click_interval_min', 'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
-                        'user_item_min_deg', 'user_item_max_deg']
+    features_columns = ['user_id', 'item_id', 'txt_embedding_sim', 'img_embedding_sim',
+     'click_item_user_sim', 'click_user_item_sim', 'user_click_num',
+     'user_click_interval_mean', 'user_click_interval_min',
+     'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
+     'user_item_min_deg', 'user_item_max_deg', 'label',
+     '0_item2item_itemcf_score', 'item20_item_itemcf_score',
+     '1_item2item_itemcf_score', 'item21_item_itemcf_score',
+     '2_item2item_itemcf_score', 'item22_item_itemcf_score',
+     '3_item2item_itemcf_score', 'item23_item_itemcf_score',
+     '4_item2item_itemcf_score', 'item24_item_itemcf_score',
+     'user_avg_click', 'user_span_click', 'user_total_deg', 'user_avg_deg',
+     '{}_item_deg', 'top_{}_item_deg']
 
     if is_recall:
         df = df[features_columns]
@@ -827,7 +829,7 @@ def do_featuring(
     itemcf_score_maxtrix = pickle.load(open('./cache/features_cache/item_sim_list', 'rb'))
     # user和最近k个item字典
     user2kitem_dict = utils.get_user2kitem_dict(all_phase_click_in, conf.itemcf_num)
-    for i in range(conf.itemcf_num):
+    for i in tqdm(range(conf.itemcf_num)):
         features_df['{}_item2item_itemcf_score'.format(i)] = features_df.apply(
             lambda x:
             itemcf_score_maxtrix.get(user2kitem_dict[x['user_id']][i]).get(x['item_id'])
@@ -857,6 +859,8 @@ def do_featuring(
     用户点击所有item的总热度/用户点击item数量 -- 用户点击平均热度，消除用户点击深度影响
     用户最近1/2/3个item热度（单独热度、总热度）
     '''
+    time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    print('新增统计特征 start time:{}'.format(time_str))
     print('用户点击深度/平均时间间隔 特征 doing')
     features_df['user_avg_click'] = features_df['user_click_num'] / features_df['user_click_interval_mean']
     print('用户点击深度/时间跨度 特征 doing')
@@ -883,20 +887,17 @@ def do_featuring(
     item2deg_dict = utils.two_columns_df2dict(hot_df_in)
     tmp = None
     for i in range(conf.itemcf_num):
-        features_df['{}_item_deg'] = features_df.apply(
+        features_df['{}_item_deg'.format(i)] = features_df.apply(
             lambda x: item2deg_dict.get(x['item_id']),
             axis=1
         )
         if tmp is None:
-            tmp = features_df['{}_item_deg']
+            tmp = features_df['{}_item_deg'.format(i)]
         else:
-            tmp += features_df['{}_item_deg']
+            tmp += features_df['{}_item_deg'.format(i)]
 
         if i > 0:
-            features_df['top_{}_item_deg'] = features_df.apply(
-                lambda x: tmp,
-                axis=1
-            )
+            features_df['top_{}_item_deg'.format(i)] = tmp
     features_df.to_csv(feature_caching_path, index=False)
 
     features_df = process_after_featuring(features_df, is_recall)
