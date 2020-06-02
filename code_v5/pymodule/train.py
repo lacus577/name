@@ -188,6 +188,9 @@ if __name__ == '__main__':
             conf.features_cache_path,
             dtype={'user_id': np.str, 'item_id': np.str}
         )
+
+        if conf.subsampling:
+            feature_df = feature_df[feature_df['user_id'].isin(all_phase_click_no_qtime['user_id'])]
         print('load features, shape:{}'.format(feature_df.shape))
     else:
         feature_df = do_featuring(
@@ -246,6 +249,8 @@ if __name__ == '__main__':
 
         if conf.is_recall_sample_cached:
             recall_sample_df = pd.read_csv(conf.recall_sample_path.format(phase), dtype={'user_id': np.str, 'item_id': np.str})
+            if conf.subsampling:
+                recall_sample_df = recall_sample_df[recall_sample_df['user_id'].isin(one_phase_recall_item_df['user_id'])]
 
             recall_sample_df.loc[:, 'user_txt_vec'] = recall_sample_df.apply(
                 lambda x: np.array([np.float(i) for i in x['user_txt_vec'].split('[')[1].split(']')[0].split()])
@@ -282,6 +287,8 @@ if __name__ == '__main__':
 
         if conf.is_recall_feature_cached:
             recall_feature_df = pd.read_csv(conf.recall_feature_path.format(phase), dtype={'user_id': np.str, 'item_id': np.str})
+            if conf.subsampling:
+                recall_feature_df = recall_feature_df[recall_feature_df['user_id'].isin(one_phase_recall_item_df['user_id'])]
             print('load recall features: phase:{} shape:{}'.format(phase, recall_feature_df.shape[0]))
         else:
             # featuring
