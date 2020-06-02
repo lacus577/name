@@ -833,6 +833,8 @@ def do_featuring(
             itemcf_score_maxtrix.get(user2kitem_dict[x['user_id']][i]).get(x['item_id'])
             if itemcf_score_maxtrix.get(user2kitem_dict[x['user_id']][i]) is not None
                and itemcf_score_maxtrix.get(user2kitem_dict[x['user_id']][i]).get(x['item_id']) is not None
+               and user2kitem_dict.get(x['user_id']) is not None
+               and len(user2kitem_dict.get(x['user_id'])) > i
             else None,
             axis=1
         )
