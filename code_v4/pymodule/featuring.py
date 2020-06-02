@@ -816,6 +816,9 @@ def do_featuring(
     #     )
     # features_df.to_csv(feature_caching_path, index=False)
 
+    # todo
+    features_df = pd.read_csv(feature_caching_path, dtype={'user_id': np.str, 'item_id': np.str})
+    
     '''
     itemCF相似度：
     '''
