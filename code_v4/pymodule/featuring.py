@@ -818,13 +818,13 @@ def do_featuring(
 
     # todo
     features_df = pd.read_csv(feature_caching_path, dtype={'user_id': np.str, 'item_id': np.str})
-    
+
     '''
     itemCF相似度：
     '''
     time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     print('itemCF相似度特征 start time:{}'.format(time_str))
-    itemcf_score_maxtrix = pickle.load('xxx', 'r')
+    itemcf_score_maxtrix = pickle.load(open('./cache/features_cache/item_sim_list', 'rb'))
     # user和最近k个item字典
     user2kitem_dict = utils.get_user2kitem_dict(all_phase_click_in, conf.itemcf_num)
     for i in range(conf.itemcf_num):

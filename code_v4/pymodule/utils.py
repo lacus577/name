@@ -157,7 +157,7 @@ def get_user2kitem_dict(df, k):
     df = df.groupby('user_id').head(k)
     df = df.groupby('user_id').agg({'item_id': lambda x: ','.join(list(x))}).reset_index()
     df.loc[:, 'item_id'] = df.apply(
-        lambda x: list(x.split(',')),
+        lambda x: list(x['item_id'].split(',')),
         axis=1
     )
 
