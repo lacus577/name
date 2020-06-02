@@ -1,9 +1,174 @@
 from collections import defaultdict
-import math
+import math, os
 
+import pickle
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+
+def recall_5146():
+    now_phase = 6
+    train_path = '../../../../data/underexpose_train'
+    test_path = '../../../../data/underexpose_test'
+    recom_item = []
+
+    whole_click = pd.DataFrame()
+    # 计算物品相似度
+    print('导入数据')
+    for c in range(now_phase + 1):
+        #     phase_recom_item = []
+        print('phase:', c)
+        click_train = pd.read_csv(train_path + '/underexpose_train_click-{}.csv'.format(c), header=None,
+                                  names=['user_id', 'item_id', 'time'])
+        click_test = pd.read_csv(test_path + '/underexpose_test_click-{}/underexpose_test_click-{}.csv'.format(c, c), header=None,
+                                 names=['user_id', 'item_id', 'time'])
+
+        whole_click = whole_click.append(click_train)
+        whole_click = whole_click.append(click_test)
+
+    whole_click = whole_click.drop_duplicates(subset=['user_id', 'item_id', 'time'], keep='last')
+    whole_click = whole_click.sort_values(by=['user_id', 'time'])
+
+    hot_click = list(whole_click['item_id'].value_counts().index[:200].values)
+    print('计算物品相似度')
+    dump_path = '../cache/item_sim_list'
+    if os.path.exists(dump_path):
+        item_sim_list = pickle.load(open(dump_path, 'rb'))
+        user_item = pickle.load(open('../cache/user_item', 'rb'))
+    else:
+        item_sim_list, user_item = get_sim_item_5164(whole_click, 'user_id', 'item_id', use_iif=False)
+
+        pickle.dump(item_sim_list, open(dump_path, 'wb'))
+        pickle.dump(user_item, open('../cache/user_item', 'wb'))
+
+    # 基于用户点击序列构建可能点击物品集
+    print('基于用户点击序列构建可能点击物品集')
+    for c in range(now_phase + 1):
+        phase_recom_item = []
+        print('phase:', c)
+        click_pred = pd.read_csv(test_path + '/underexpose_test_qtime-{}.csv'.format(c), header=None,
+                                 names=['user_id', 'time'])
+
+        #     pred_user_time_dict = dict(zip(click_pred['user_id'], user_time_['time']))
+
+        for i, row in tqdm(click_pred.iterrows()):
+            rank_item, interacted_items = recommend_time_5164(item_sim_list, whole_click, row, 500, 500)
+            #         rank_item = recommend(item_sim_list, user_item, row['user_id'], 500, 500)
+            rank_item = rank_item[:100]
+            for j in rank_item:
+                recom_item.append([row['user_id'], j[0], j[1]])
+                phase_recom_item.append([row['user_id'], j[0], j[1]])
+            hot_cover = 100 - len(rank_item)
+            #         while hot_cover>0:
+            if hot_cover > 0:
+                for hot_index, hot_item in enumerate(hot_click):
+                    if hot_item not in interacted_items and hot_item not in [x[0] for x in rank_item]:
+                        recom_item.append([row['user_id'], hot_item, -1 * hot_index])
+                        phase_recom_item.append([row['user_id'], hot_item, -1 * hot_index])
+                        hot_cover -= 1
+                    if hot_cover <= 0:
+                        break
+        phase_recom_df = pd.DataFrame(phase_recom_item, columns=['user_id', 'item_id', 'sim'])
+        phase_recom_df.to_csv('../cache/phase_{}_recall_100.csv'.format(c), index=False)
+    print('构建提交结果集')
+    recom_df = pd.DataFrame(recom_item, columns=['user_id', 'item_id', 'sim'])
+    # result = get_predict(recom_df, 'sim', top50_click)
+    result = get_predict_5164(recom_df, 'sim')
+    result['user_id'] = result.astype({'user_id': 'int'})
+    result.to_csv('baseline_whole_click_int.csv', index=False, header=None)
+
+
+def get_sim_item_5164(df_, user_col, item_col, use_iif=False):
+    df = df_.copy()
+    user_item_ = df.groupby(user_col)[item_col].agg(list).reset_index()
+    user_item_dict = dict(zip(user_item_[user_col], user_item_[item_col]))
+
+    user_time_ = df.groupby(user_col)['time'].agg(list).reset_index()  # 引入时间因素
+    user_time_dict = dict(zip(user_time_[user_col], user_time_['time']))
+
+    sim_item = {}
+    item_cnt = defaultdict(int)  # 商品被点击次数
+    for user, items in tqdm(user_item_dict.items()):
+        for loc1, item in enumerate(items):
+            item_cnt[item] += 1
+            sim_item.setdefault(item, {})
+            for loc2, relate_item in enumerate(items):
+                if item == relate_item:
+                    continue
+                t1 = user_time_dict[user][loc1]  # 点击时间提取
+                t2 = user_time_dict[user][loc2]
+                sim_item[item].setdefault(relate_item, 0)
+                if not use_iif:
+                    if loc1 - loc2 > 0:
+                        sim_item[item][relate_item] += 1 * 1.0 * (0.8 ** (loc1 - loc2 - 1)) * (
+                        1.3 - (t1 - t2) * 10000) / math.log(1 + len(items))  # 逆向
+                    else:
+                        sim_item[item][relate_item] += 1 * 1.0 * (0.8 ** (loc2 - loc1 - 1)) * (
+                        1.3 - (t2 - t1) * 10000) / math.log(1 + len(items))  # 正向
+                else:
+                    sim_item[item][relate_item] += 1 / math.log(1 + len(items))
+
+    sim_item_corr = sim_item.copy()  # 引入AB的各种被点击次数
+    for i, related_items in tqdm(sim_item.items()):
+        for j, cij in related_items.items():
+            sim_item_corr[i][j] = cij / ((item_cnt[i] * item_cnt[j]) ** 0.2)
+
+    return sim_item_corr, user_item_dict
+
+# fill user to 50 items
+# def get_predict(df, pred_col, top_fill):
+def get_predict_5164(df, pred_col):
+#     top_fill = [int(t) for t in top_fill.split(',')]
+#     scores = [-1 * i for i in range(1, len(top_fill) + 1)]
+    ids = list(df['user_id'].unique())
+#     fill_df = pd.DataFrame(ids * len(top_fill), columns=['user_id'])
+#     fill_df.sort_values('user_id', inplace=True)
+#     fill_df['item_id'] = top_fill * len(ids)
+#     fill_df[pred_col] = scores * len(ids)
+#     df = df.append(fill_df)
+    df.sort_values(pred_col, ascending=False, inplace=True)
+    df = df.drop_duplicates(subset=['user_id', 'item_id'], keep='first')
+    df['rank'] = df.groupby('user_id')[pred_col].rank(method='first', ascending=False)
+    df = df[df['rank'] <= 50]
+    df = df.groupby('user_id')['item_id'].apply(lambda x: ','.join([str(i) for i in x])).str.split(',', expand=True).reset_index()
+    return df
+
+def recommend_time_5164(sim_item_corr, user_item_df, row, top_k, item_num):
+    '''
+    input:item_sim_list, user_item, uid, 500, 50
+    # 用户历史序列中的所有商品均有关联商品,整合这些关联商品,进行相似性排序
+    '''
+    rank = {}
+    interacted_items = set(user_item_df[user_item_df['user_id']==row['user_id']]['item_id'].values)
+    #前面时间的要按照降序来，时间越大权重越大
+    user_item_before = list(user_item_df[(user_item_df['user_id']==row['user_id']) & (user_item_df['time'] <= row['time'])].sort_values(by='time',ascending=False)['item_id'].values)
+    #后面时间的要按照升序来，时间越小的权重越大
+    user_item_after = list(user_item_df[(user_item_df['user_id']==row['user_id']) & (user_item_df['time'] > row['time'])].sort_values(by='time')['item_id'].values)
+
+#     interacted_items = user_item_dict[user_id]
+#     interacted_items = interacted_items[::-1]
+#0.7  0.7 0.5140
+#0.7 0.6 0.5164
+#0.7 0.5 0.5164 但是full和half存在变化，full下降，half上升
+    for loc,i in enumerate(user_item_before):
+        for j, wij in sorted(sim_item_corr[i].items(), key=lambda d: d[1], reverse=True)[0:top_k]:
+            if j not in interacted_items:
+                rank.setdefault(j, 0)
+                rank[j] += wij * (0.7**loc)
+
+    for loc,i in enumerate(user_item_after):
+        for j, wij in sorted(sim_item_corr[i].items(), key=lambda d: d[1], reverse=True)[0:top_k]:
+            if j not in interacted_items:
+                rank.setdefault(j, 0)
+                rank[j] += wij * (0.5**loc)
+
+#     for loc, i in enumerate(interacted_items):
+#         for j, wij in sorted(sim_item_corr[i].items(), key=lambda d: d[1], reverse=True)[0:top_k]:
+#             if j not in interacted_items:
+#                 rank.setdefault(j, 0)
+#                 rank[j] += wij * (0.7**loc)
+
+    return sorted(rank.items(), key=lambda d: d[1], reverse=True)[:item_num],interacted_items
 
 def recommend(sim_item_corr, user_item_dict, user_id, top_k, item_num):
     '''
@@ -172,3 +337,6 @@ def topk_recall_association_rules_open_source(click_all, dict_label, k=200):
     topk_recall['pred'] = topk_recall['user_id'].map(lambda x: 'train' if x in dict_label else 'test')
 
     return topk_recall
+
+if __name__ == '__main__':
+    recall_5146()

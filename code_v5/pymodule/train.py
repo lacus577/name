@@ -268,7 +268,7 @@ if __name__ == '__main__':
 
         submit_x = recall_feature_df[recall_feature_df.columns.difference(['user_id', 'item_id', 'label'])].values
         submit_pre_y = model.predict_proba(submit_x)[:, 1]
-        submit = utils.save_pre_as_submit_format_csv(one_phase_recall_item_df, submit_pre_y)
+        submit = utils.save_pre_as_submit_format_csv(recall_sample_df, submit_pre_y)
         submit_all = submit_all.append(submit)
 
     print('--------------------------- 保存预测文件 --------------------------')
