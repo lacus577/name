@@ -834,20 +834,22 @@ def do_featuring(
     for i in tqdm(range(conf.itemcf_num)):
         features_df['{}_item2item_itemcf_score'.format(i)] = features_df.apply(
             lambda x:
-            itemcf_score_maxtrix.get(user2kitem_dict[x['user_id']][i]).get(x['item_id'])
+            itemcf_score_maxtrix.get(int(user2kitem_dict[x['user_id']][i])).get(int(x['item_id']))
             if user2kitem_dict.get(x['user_id']) is not None
                and len(user2kitem_dict.get(x['user_id'])) > i
-               and itemcf_score_maxtrix.get(user2kitem_dict[x['user_id']][i]) is not None
-               and itemcf_score_maxtrix.get(user2kitem_dict[x['user_id']][i]).get(x['item_id']) is not None
+               and itemcf_score_maxtrix.get(int(user2kitem_dict[x['user_id']][i])) is not None
+               and itemcf_score_maxtrix.get(int(user2kitem_dict[x['user_id']][i])).get(int(x['item_id'])) is not None
             else None,
             axis=1
         )
 
         features_df['item2{}_item_itemcf_score'.format(i)] = features_df.apply(
             lambda x:
-            itemcf_score_maxtrix.get(x['item_id']).get(user2kitem_dict[x['user_id']][i])
-            if itemcf_score_maxtrix.get(x['item_id']) is not None
-               and itemcf_score_maxtrix.get(x['item_id']).get(user2kitem_dict[x['user_id']][i]) is not None
+            itemcf_score_maxtrix.get(int(x['item_id'])).get(int(user2kitem_dict[x['user_id']][i]))
+            if user2kitem_dict.get(x['user_id']) is not None
+               and len(user2kitem_dict.get(x['user_id'])) > i
+               and itemcf_score_maxtrix.get(int(x['item_id'])) is not None
+               and itemcf_score_maxtrix.get(int(x['item_id'])).get(int(user2kitem_dict[x['user_id']][i])) is not None
             else None,
             axis=1
         )
@@ -888,7 +890,7 @@ def do_featuring(
     print('用户最近k个item热度 特征 doing')
     item2deg_dict = utils.two_columns_df2dict(hot_df_in)
     tmp = None
-    for i in range(conf.itemcf_num):
+    for i in tqdm(range(conf.itemcf_num)):
         features_df['{}_item_deg'.format(i)] = features_df.apply(
             lambda x: item2deg_dict.get(x['item_id']),
             axis=1
