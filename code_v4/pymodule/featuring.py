@@ -538,17 +538,19 @@ def process_after_featuring(df, is_recall=False):
     #    'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
     #    'user_item_min_deg', 'user_item_max_deg']
     features_columns = ['user_id', 'item_id', 'txt_embedding_sim', 'img_embedding_sim',
-     'click_item_user_sim', 'click_user_item_sim', 'user_click_num',
-     'user_click_interval_mean', 'user_click_interval_min',
-     'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
-     'user_item_min_deg', 'user_item_max_deg', 'label',
-     '0_item2item_itemcf_score', 'item20_item_itemcf_score',
-     '1_item2item_itemcf_score', 'item21_item_itemcf_score',
-     '2_item2item_itemcf_score', 'item22_item_itemcf_score',
-     '3_item2item_itemcf_score', 'item23_item_itemcf_score',
-     '4_item2item_itemcf_score', 'item24_item_itemcf_score',
-     'user_avg_click', 'user_span_click', 'user_total_deg', 'user_avg_deg',
-     '{}_item_deg', 'top_{}_item_deg']
+       'click_item_user_sim', 'click_user_item_sim', 'user_click_num',
+       'user_click_interval_mean', 'user_click_interval_min',
+       'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
+       'user_item_min_deg', 'user_item_max_deg',
+       '0_item2item_itemcf_score', 'item20_item_itemcf_score',
+       '1_item2item_itemcf_score', 'item21_item_itemcf_score',
+       '2_item2item_itemcf_score', 'item22_item_itemcf_score',
+       '3_item2item_itemcf_score', 'item23_item_itemcf_score',
+       '4_item2item_itemcf_score', 'item24_item_itemcf_score',
+       'user_avg_click', 'user_span_click', 'user_total_deg', 'user_avg_deg',
+       '0_item_deg', '1_item_deg', 'top_1_item_deg', '2_item_deg',
+       'top_2_item_deg', '3_item_deg', 'top_3_item_deg', '4_item_deg',
+       'top_4_item_deg']
 
     if is_recall:
         df = df[features_columns]
