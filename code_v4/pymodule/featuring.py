@@ -862,7 +862,8 @@ def do_featuring(
     print('用户点击深度/时间跨度 特征 doing')
     user2click_span_dict = utils.get_user2click_span_dict(all_phase_click_in)
     features_df['user_span_click'] = features_df.apply(
-        lambda x: x['user_click_num'] / user2click_span_dict.get(x['user_id']),
+        lambda x: x['user_click_num'] / user2click_span_dict.get(x['user_id'])
+        if user2click_span_dict.get(x['user_id']) is not None else None,
         axis=1
     )
     features_df.to_csv(feature_caching_path, index=False)
