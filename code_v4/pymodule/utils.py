@@ -151,3 +151,30 @@ def save_pre_as_submit_format_csv(data_df, out_y):
 
     valid_submit = valid_eval_data.groupby(['user_id'])['item_id'].agg(lambda x: ','.join(list(x))).reset_index()
     return valid_submit
+
+
+def get_user2kitem_dict(df, k):
+    df = df.groupby('user_id').head(k)
+    df = df.groupby('user_id').agg({'item_id': lambda x: ','.join(list(x))}).reset_index()
+    df.loc[:, 'item_id'] = df.apply(
+        lambda x: list(x.split(',')),
+        axis=1
+    )
+
+    result_dict = dict(zip(df['user_id'], df['item_id']))
+    return result_dict
+
+def get_user2click_span_dict(df):
+    # df = df.sort_values(['user_id', 'time'])
+    df = df.groupby('user_id').agg({'time': lambda x: np.max(list(x)) - np.min(list(x))}).reset_index()
+    result_dict = dict(zip(df['user_id'], df['time']))
+
+    return result_dict
+
+def get_user2total_deg_dict(df, hot_df):
+    tmp = df.merge(hot_df, on='item_id', how='left')
+    tmp = tmp.groupby('user_id').agg({'item_deg': lambda x: np.sum(list(x))}).reset_index()
+
+    result_dict = dict(zip(tmp['user_id'], tmp['item_deg']))
+
+    return result_dict
