@@ -831,10 +831,10 @@ def do_featuring(
         features_df['{}_item2item_itemcf_score'.format(i)] = features_df.apply(
             lambda x:
             itemcf_score_maxtrix.get(user2kitem_dict[x['user_id']][i]).get(x['item_id'])
-            if itemcf_score_maxtrix.get(user2kitem_dict[x['user_id']][i]) is not None
-               and itemcf_score_maxtrix.get(user2kitem_dict[x['user_id']][i]).get(x['item_id']) is not None
-               and user2kitem_dict.get(x['user_id']) is not None
+            if user2kitem_dict.get(x['user_id']) is not None
                and len(user2kitem_dict.get(x['user_id'])) > i
+               and itemcf_score_maxtrix.get(user2kitem_dict[x['user_id']][i]) is not None
+               and itemcf_score_maxtrix.get(user2kitem_dict[x['user_id']][i]).get(x['item_id']) is not None
             else None,
             axis=1
         )
