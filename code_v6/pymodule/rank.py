@@ -3,7 +3,7 @@ from multiprocessing import cpu_count
 import pandas as pd
 import numpy as np
 import lightgbm as lgb
-# from xgboost import XGBClassifier
+from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, StackingClassifier, AdaBoostClassifier
@@ -24,11 +24,11 @@ def rank_stacking_classifer(X, Y):
 
     return clf
 
-# def rank_xgb(X, Y):
-#     clf = XGBClassifier()
-#     clf.fit(X, Y)
-#
-#     return clf
+def rank_xgb(X, Y):
+    clf = XGBClassifier(n_jobs=(max(1, cpu_count() - 5)))
+    clf.fit(X, Y)
+
+    return clf
 
 def rank_rf(X, Y):
     clf = RandomForestClassifier(n_estimators=100, n_jobs=(max(1, cpu_count() - 5)))

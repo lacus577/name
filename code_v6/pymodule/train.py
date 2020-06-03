@@ -12,7 +12,7 @@ import pickle
 from sklearn.metrics import roc_auc_score
 
 from pymodule import conf
-from pymodule.rank import train_model_rf, train_model_lgb, rank_rf
+from pymodule.rank import train_model_rf, train_model_lgb, rank_rf, rank_xgb
 from pymodule.eval import metrics_recall
 from pymodule.recall import topk_recall_association_rules_open_source
 from pymodule.featuring import matrix_word2vec_embedding, get_train_test_data, \
@@ -224,8 +224,8 @@ if __name__ == '__main__':
     print('------------------------ 模型训练 start time:{}'.format(time_str))
     # submit = train_model_lgb(feature_all, recall_rate=hit_rate, hot_list=hot_list, valid=0.2, topk=50, num_boost_round=1, early_stopping_rounds=1)
     # submit = train_model_rf(train_test, recall_rate=1, hot_list=hot_list, valid=0.2, topk=50)
-    model = rank_rf(train_x, train_y)
-    # model = rank_xgb(train_x, train_y)
+    # model = rank_rf(train_x, train_y)
+    model = rank_xgb(train_x, train_y)
     print('train set: auc:{}'.format(roc_auc_score(train_y, model.predict_proba(train_x)[:, 1])))
     with open('./cache/rf.pickle', 'wb') as f:
         pickle.dump(model, f)
