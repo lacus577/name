@@ -354,7 +354,7 @@ def train_test_split(total_features, percentage=0.7):
     df_train_0, df_train_1 = df.iloc[:cut_idx], df.iloc[cut_idx:]
 
     train_data = df_train_0.merge(total_features, on=['user_id'], how='left')
-    tmp_valid_data = df_train_1.merge(total_features, on=['user_id'], how='left')
+    valid_data = df_train_1.merge(total_features, on=['user_id'], how='left')
 
     # valid_data_len = tmp_valid_data.shape[0]
     # valid_data = tmp_valid_data[tmp_valid_data['label'] == 1]
@@ -365,11 +365,11 @@ def train_test_split(total_features, percentage=0.7):
     # )
 
     # 验证集中每个user只保留一个label为1的正样本
-    valid_data = tmp_valid_data.groupby('user_id').head(6)
-    # assert 1 == np.sum(valid_data['label'] == 1)
-    assert len(set(valid_data['user_id'])) == valid_data[valid_data['label'] == 1].shape[0]
-    tmp_valid_data = tmp_valid_data.append(valid_data).drop_duplicates(['user_id', 'item_id', 'label'], keep=False)
-    train_data = train_data.append(tmp_valid_data)
+    # valid_data = tmp_valid_data.groupby('user_id').head(6)
+    # # assert 1 == np.sum(valid_data['label'] == 1)
+    # assert len(set(valid_data['user_id'])) == valid_data[valid_data['label'] == 1].shape[0]
+    # tmp_valid_data = tmp_valid_data.append(valid_data).drop_duplicates(['user_id', 'item_id', 'label'], keep=False)
+    # train_data = train_data.append(tmp_valid_data)
 
     return train_data, valid_data
 
