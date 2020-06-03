@@ -665,14 +665,12 @@ def get_samples_v1(df, item_info_df, total_user_recall_df, time_interval_thr, ne
 
     item_info_dict = utils.transfer_item_features_df2dict(item_info_df, dim)
     result_pd['item_txt_vec'] = result_pd.apply(
-        lambda x: item_info_dict['txt_vec'].get(x['item_id'])
-        if item_info_dict['txt_vec'].get(x['item_id']) else None,
+        lambda x: item_info_dict['txt_vec'].get(x['item_id']),
         axis=1
     )
 
     result_pd['item_img_vec'] = result_pd.apply(
-        lambda x: item_info_dict['img_vec'].get(x['item_id'])
-        if item_info_dict['img_vec'].get(x['item_id']) else None,
+        lambda x: item_info_dict['img_vec'].get(x['item_id']),
         axis=1
     )
 
