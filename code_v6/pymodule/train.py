@@ -128,7 +128,7 @@ if __name__ == '__main__':
             one_phase_train_click['train_or_test'] = 'train'
             one_phase_qtime['phase'] = str(phase)
             one_phase_qtime['train_or_test'] = 'predict'
-            one_phase_qtime['item_id'] = np.nan
+            one_phase_qtime['item_id'] = None
 
             all_phase_click_org = all_phase_click_org.append(one_phase_train_click).reset_index(drop=True)
             all_phase_click_org = all_phase_click_org.append(one_phase_test_click).reset_index(drop=True)
@@ -141,9 +141,9 @@ if __name__ == '__main__':
         # 删除重复点击
         all_phase_click = utils.del_dup(all_phase_click_org)
         # 删除待预测时间点 之后的点击数据 防止数据泄露
-        all_phase_click_666 = utils.del_qtime_future_click(all_phase_click)
+        # all_phase_click_666 = utils.del_qtime_future_click(all_phase_click)
         # 时间处理 乘上 1591891140
-        all_phase_click_666 = utils.process_time(all_phase_click_666, 1591891140)
+        all_phase_click_666 = utils.process_time(all_phase_click, 1591891140)
 
         all_phase_click_666 = all_phase_click_666.sort_values(['user_id', 'time']).reset_index(drop=True)
         all_phase_click_666.to_csv(conf.click_cache_path, index=False)
@@ -178,16 +178,16 @@ if __name__ == '__main__':
         #     if x['user_img_vec'] is not np.nan and x['user_img_vec'] else x['user_img_vec'],
         #     axis=1
         # )
-        sample_df.loc[:, 'item_txt_vec'] = sample_df.apply(
-            lambda x: np.array([np.float(i) for i in x['item_txt_vec'].split('[')[1].split(']')[0].split()])
-            if x['item_txt_vec'] is not np.nan and x['item_txt_vec'] else x['item_txt_vec'],
-            axis=1
-        )
-        sample_df.loc[:, 'item_img_vec'] = sample_df.apply(
-            lambda x: np.array([np.float(i) for i in x['item_img_vec'].split('[')[1].split(']')[0].split()])
-            if x['item_img_vec']  is not np.nan and x['item_img_vec'] else x['item_img_vec'],
-            axis=1
-        )
+        # sample_df.loc[:, 'item_txt_vec'] = sample_df.apply(
+        #     lambda x: np.array([np.float(i) for i in x['item_txt_vec'].split('[')[1].split(']')[0].split()])
+        #     if x['item_txt_vec'] is not np.nan and x['item_txt_vec'] else x['item_txt_vec'],
+        #     axis=1
+        # )
+        # sample_df.loc[:, 'item_img_vec'] = sample_df.apply(
+        #     lambda x: np.array([np.float(i) for i in x['item_img_vec'].split('[')[1].split(']')[0].split()])
+        #     if x['item_img_vec']  is not np.nan and x['item_img_vec'] else x['item_img_vec'],
+        #     axis=1
+        # )
         print('load samples, shape:{}'.format(sample_df.shape))
     else:
         sample_df = get_samples_v1(all_phase_click_666, item_info_df, total_user_recall_df, 280, 5, item_txt_embedding_dim, conf.process_num)

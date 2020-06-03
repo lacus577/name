@@ -354,8 +354,9 @@ def train_test_split(total_features, percentage=0.7):
     df_train_0, df_train_1 = df.iloc[:cut_idx], df.iloc[cut_idx:]
 
     train_data = df_train_0.merge(total_features, on=['user_id'], how='left')
-    valid_data = df_train_1.merge(total_features, on=['user_id'], how='left')
+    tmp_valid_data = df_train_1.merge(total_features, on=['user_id'], how='left')
 
+    # 负样本按照比例采样
     # valid_data_len = tmp_valid_data.shape[0]
     # valid_data = tmp_valid_data[tmp_valid_data['label'] == 1]
     # negative_len = (valid_data_len - valid_data.shape[0]) // valid_data.shape[0]
@@ -365,11 +366,13 @@ def train_test_split(total_features, percentage=0.7):
     # )
 
     # 验证集中每个user只保留一个label为1的正样本
-    # valid_data = tmp_valid_data.groupby('user_id').head(6)
-    # # assert 1 == np.sum(valid_data['label'] == 1)
-    # assert len(set(valid_data['user_id'])) == valid_data[valid_data['label'] == 1].shape[0]
-    # tmp_valid_data = tmp_valid_data.append(valid_data).drop_duplicates(['user_id', 'item_id', 'label'], keep=False)
-    # train_data = train_data.append(tmp_valid_data)
+    positive_valid_data = tmp_valid_data[tmp_valid_data['label'] == 1].drop_duplicates(['user_id'], keep='last')
+    negative_valid_data = tmp_valid_data[tmp_valid_data['label'] == 0]
+    negative_valid_data = negative_valid_data.sample(frac=1, random_state=1).groupby('user_id').head(conf.negative_num)
+    valid_data = positive_valid_data.append(negative_valid_data)
+    assert len(set(valid_data['user_id'])) == valid_data[valid_data['label'] == 1].shape[0]
+    tmp_valid_data = tmp_valid_data.append(valid_data).drop_duplicates(['user_id', 'item_id', 'label'], keep=False)
+    train_data = train_data.append(tmp_valid_data)
 
     return train_data, valid_data
 
@@ -584,95 +587,32 @@ def get_samples_v1(df, item_info_df, total_user_recall_df, time_interval_thr, ne
     '''
 
     # 正样本构建 -- 所有不在test集合中的user点击都作为正样本
-    positive_sample_df = df[df['train_or_test'] == 'train'].reset_index(drop=True)
+    # positive_sample_df = df[df['train_or_test'] == 'train'].reset_index(drop=True)
+    positive_sample_df = df.sample(frac=1, random_state=1).groupby('user_id').head(5)
     positive_sample_df['label'] = 1
 
     # 负样本构建 -- 召回结果中，不是正样本的都是负样本
-    train_user_set = set(df[df['train_or_test'] == 'train']['user_id'])
+    train_user_set = set(df['user_id'])
     user_recall_df = total_user_recall_df[total_user_recall_df['user_id'].isin(train_user_set)]
     user_recall_df = user_recall_df.merge(positive_sample_df, on=['user_id', 'item_id'], how='left')
     negative_sample_df = user_recall_df[user_recall_df['label'] != 1]
     negative_sample_df.loc[:, 'label'] = 0
     # 每个用户取negative_num个负样本
-    negative_sample_df = negative_sample_df.groupby('user_id').head(conf.negative_num)
+    negative_sample_df = negative_sample_df.sample(frac=1, random_state=1).groupby('user_id').head(5 * conf.negative_num)
     negative_sample_df = negative_sample_df.reset_index(drop=True)
 
-    # df = df[df['train_or_test'] != 'predict']
-    # user_set = set(df['user_id'])
-    # print(len(user_set))
-    # positive_sample_list = []
-    # for user in tqdm(user_set):
-    #     user_df = df[df['user_id'] == user]
-    #     user_df = user_df.sort_values(['time'], ascending=False).reset_index()
-    #     user_df['time_interval'] = list(np.array(list(user_df['time']))[:-1] - np.array(list(user_df['time']))[1:]) + [np.inf]
-    #
-    #     s = e = 0
-    #     one_user_sample = 0
-    #     for i in range(user_df.shape[0]):
-    #         if user_df.loc[i, 'time_interval'] <= time_interval_thr:
-    #             e += 1
-    #         else:
-    #             if e - s >= 3:
-    #                 positive_sample_list.append([user] + list(user_df.loc[s: e, 'item_id']))
-    #                 one_user_sample += 1
-    #             s = e = i + 1
-    #
-    # # 对于每个待预测的user， 需要以其最近一次点击来构建一个正样本 -- 虽然不知道是否有用
-    # qtime_user_set = set(df[df['train_or_test'] == 'predict']['user_id'])
-    # for user in tqdm(qtime_user_set):
-    #     user_df = df[df['user_id'] == user]
-    #     positive_sample_list.append([user] + list(user_df.loc[0: 4, 'item_id']))
-    #
-    # print(len(positive_sample_list))
-    #
-    # # 负采样
-    # negative_sample_dict = {}
-    # one_user_tmp = None
-    # for i in tqdm(range(len(positive_sample_list))):
-    #     user = positive_sample_list[i][0]
-    #     if one_user_tmp is None or user not in one_user_tmp.keys():
-    #         one_user_tmp = df[~df['item_id'].isin(df[df['user_id'] == user]['item_id'])]
-    #
-    #     negative_tmp = one_user_tmp.sample(n=negative_num, random_state=1, axis=0)
-    #     # negative_sample_list.append([user] + list(negative_tmp['item_id']))
-    #     negative_sample_dict[i] = list(negative_tmp['item_id'])
-    #
-    #
-    # positive_sample_list.extend(negative_sample_list)
-    # 正负样本df构建 并 缓存
-
-
-    # pool = multiprocessing.Pool(processes=process_num)
-    # process_result = []
-    # for i in range(process_num):
-    #     sample_len = len(positive_sample_list)
-    #     step = sample_len // process_num
-    #     if i + 1 != process_num:
-    #         input_data = positive_sample_list[i * step: (i + 1) * step]
-    #     else:
-    #         input_data = positive_sample_list[i * step: ]
-    #     process_result.append(
-    #         pool.apply_async(make_samples, (i * step, input_data, item_info_dict, negative_sample_dict, ))
-    #     )
-    #
-    # pool.close()
-    # pool.join()
-    # result_pd = pd.DataFrame()
-    # for res in process_result:
-    #     result_pd = result_pd.append(res.get())
-
     result_pd = positive_sample_df.append(negative_sample_df)
-
-    item_info_dict = utils.transfer_item_features_df2dict(item_info_df, dim)
-    result_pd['item_txt_vec'] = result_pd.apply(
-        lambda x: item_info_dict['txt_vec'].get(x['item_id']),
-        axis=1
-    )
-
-    result_pd['item_img_vec'] = result_pd.apply(
-        lambda x: item_info_dict['img_vec'].get(x['item_id']),
-        axis=1
-    )
+    #
+    # item_info_dict = utils.transfer_item_features_df2dict(item_info_df, dim)
+    # result_pd['item_txt_vec'] = result_pd.apply(
+    #     lambda x: item_info_dict['txt_vec'].get(x['item_id']),
+    #     axis=1
+    # )
+    #
+    # result_pd['item_img_vec'] = result_pd.apply(
+    #     lambda x: item_info_dict['img_vec'].get(x['item_id']),
+    #     axis=1
+    # )
 
     return result_pd
 
@@ -768,7 +708,7 @@ def do_featuring(
     features_df.to_csv(feature_caching_path, index=False)
 
     # 删除vec，因为非常大，缓存耗时
-    features_df = features_df[features_df.columns.difference(['item_txt_vec', 'item_img_vec'])]
+    # features_df = features_df[features_df.columns.difference(['item_txt_vec', 'item_img_vec'])]
 
     '''
     统计特征:

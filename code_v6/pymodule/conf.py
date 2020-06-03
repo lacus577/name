@@ -10,11 +10,11 @@ now_phase = 6
 subsampling = 3
 
 ''' 全量点击序 '''
-is_click_cached = True
+is_click_cached = False
 
 ''' 训练集、测试集 '''
 ''' 训练集、测试集样本是否已经缓存 '''
-is_samples_cached = True
+is_samples_cached = False
 ''' 训练集、测试集特征是否已经缓存 '''
 is_feature_cached = False
 
@@ -22,15 +22,15 @@ is_feature_cached = False
 ''' 召回结果缓存 '''
 is_recall_cached = True
 ''' 召回结果样本缓存 '''
-is_recall_sample_cached = False
+is_recall_sample_cached = True
 ''' 召回结果特征缓存 '''
-is_recall_feature_cached = False
+is_recall_feature_cached = True
 
 ''' itemcf相似度前k个'''
 itemcf_num = 5
 
 ''' 负样本数量 '''
-negative_num = 100
+negative_num = 15
 #
 # ''' 召回数量 '''
 # recall_num = 500
