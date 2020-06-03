@@ -882,7 +882,7 @@ def do_featuring(
             axis=1
         )
         if tmp is None:
-            tmp = features_df['{}_item_deg'.format(i)]
+            tmp = 0 + features_df['{}_item_deg'.format(i)]
         else:
             tmp += features_df['{}_item_deg'.format(i)]
 
