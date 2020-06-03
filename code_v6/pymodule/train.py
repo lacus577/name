@@ -190,7 +190,7 @@ if __name__ == '__main__':
         # )
         print('load samples, shape:{}'.format(sample_df.shape))
     else:
-        sample_df = get_samples_v1(all_phase_click_666, item_info_df, total_user_recall_df, 280, 5, item_txt_embedding_dim, conf.process_num)
+        sample_df = get_samples_v1(all_phase_click_no_qtime, item_info_df, total_user_recall_df, 280, 5, item_txt_embedding_dim, conf.process_num)
         sample_df.to_csv(conf.samples_cache_path, index=False)
 
     ''' 训练/验证集 特征 '''
