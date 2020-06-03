@@ -767,6 +767,9 @@ def do_featuring(
     )
     features_df.to_csv(feature_caching_path, index=False)
 
+    # 删除vec，因为非常大，缓存耗时
+    features_df = features_df[features_df.columns.difference(['item_txt_vec', 'item_img_vec'])]
+
     '''
     统计特征:
     一阶特征：
