@@ -876,7 +876,9 @@ def do_featuring(
     tmp = None
     for i in tqdm(range(conf.itemcf_num)):
         features_df['{}_item_deg'.format(i)] = features_df.apply(
-            lambda x: item2deg_dict.get(x['item_id']),
+            lambda x: item2deg_dict.get(user2kitem_dict[x['user_id']][i])
+            if user2kitem_dict.get(x['user_id']) is not None and len(user2kitem_dict.get(x['user_id'])) > i
+            else None,
             axis=1
         )
         if tmp is None:
