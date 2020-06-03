@@ -5,6 +5,24 @@ import numpy as np
 import lightgbm as lgb
 # from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, StackingClassifier, AdaBoostClassifier
+
+def rank_stacking_classifer(X, Y):
+    # rf = RandomForestClassifier()
+    # gbdt = GradientBoostingClassifier()
+    # adaboost = AdaBoostRegressor()
+    # clf = StackingClassifier(classiers=).fit(X, Y)
+
+    estimators = [
+        ('rf', RandomForestClassifier(n_jobs=20)), ('gbdt', GradientBoostingClassifier()), ('AdaBoostRegressor', AdaBoostClassifier())
+    ]
+
+    clf = StackingClassifier(estimators=estimators, final_estimator=LogisticRegression())
+
+    clf.fit(X, Y)
+
+    return clf
 
 # def rank_xgb(X, Y):
 #     clf = XGBClassifier()
