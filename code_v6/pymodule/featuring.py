@@ -529,7 +529,7 @@ def process_after_featuring(df, is_recall=False):
     :return:
     '''
     ''' 缺失值处理 当前填0 '''
-    df.fillna(value=0, axis=0, inplace=True)
+    # df.fillna(value=0, axis=0, inplace=True)
 
     ''' 特征列顺序 重新 组织 '''
     # ['user_id', 'item_id', 'label', 'itemcf_score', 'txt_embedding_sim', 'img_embedding_sim', 'click_item_user_sim', 'click_user_item_sim', 'item_distance',
