@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
+recall_num = 500
+
 def recall_5146():
     now_phase = 6
     train_path = '../../../../data/underexpose_train'
@@ -31,15 +33,15 @@ def recall_5146():
 
     hot_click = list(whole_click['item_id'].value_counts().index[:200].values)
     print('计算物品相似度')
-    dump_path = '../cache/item_sim_list'
+    dump_path = './cache/features_cache/item_sim_list'
     if os.path.exists(dump_path):
         item_sim_list = pickle.load(open(dump_path, 'rb'))
-        user_item = pickle.load(open('../cache/user_item', 'rb'))
+        user_item = pickle.load(open('./cache/features_cache/user_item', 'rb'))
     else:
         item_sim_list, user_item = get_sim_item_5164(whole_click, 'user_id', 'item_id', use_iif=False)
 
         pickle.dump(item_sim_list, open(dump_path, 'wb'))
-        pickle.dump(user_item, open('../cache/user_item', 'wb'))
+        pickle.dump(user_item, open('./cache/features_cache/user_item', 'wb'))
 
     # 基于用户点击序列构建可能点击物品集
     print('基于用户点击序列构建可能点击物品集')
@@ -54,7 +56,7 @@ def recall_5146():
         for i, row in tqdm(click_pred.iterrows()):
             rank_item, interacted_items = recommend_time_5164(item_sim_list, whole_click, row, 500, 500)
             #         rank_item = recommend(item_sim_list, user_item, row['user_id'], 500, 500)
-            rank_item = rank_item[:100]
+            rank_item = rank_item[:recall_num]
             for j in rank_item:
                 recom_item.append([row['user_id'], j[0], j[1]])
                 phase_recom_item.append([row['user_id'], j[0], j[1]])
@@ -69,13 +71,36 @@ def recall_5146():
                     if hot_cover <= 0:
                         break
         phase_recom_df = pd.DataFrame(phase_recom_item, columns=['user_id', 'item_id', 'sim'])
-        phase_recom_df.to_csv('../cache/phase_{}_recall_100.csv'.format(c), index=False)
+        phase_recom_df.to_csv('./cache/features_cache/phase_{}_recall_{}.csv'.format(c, recall_num), index=False)
     print('构建提交结果集')
     recom_df = pd.DataFrame(recom_item, columns=['user_id', 'item_id', 'sim'])
     # result = get_predict(recom_df, 'sim', top50_click)
     result = get_predict_5164(recom_df, 'sim')
     result['user_id'] = result.astype({'user_id': 'int'})
     result.to_csv('baseline_whole_click_int.csv', index=False, header=None)
+
+    # 基于用户点击序列构建可能点击物品集
+    print('训练集user召回')
+    phase_recom_item = []
+    for i, row in tqdm(whole_click.iterrows()):
+        rank_item, interacted_items = recommend_time_5164(item_sim_list, whole_click, row, 500, 500)
+        #         rank_item = recommend(item_sim_list, user_item, row['user_id'], 500, 500)
+        rank_item = rank_item[:recall_num]
+        for j in rank_item:
+            recom_item.append([row['user_id'], j[0], j[1]])
+            phase_recom_item.append([row['user_id'], j[0], j[1]])
+        hot_cover = 100 - len(rank_item)
+        #         while hot_cover>0:
+        if hot_cover > 0:
+            for hot_index, hot_item in enumerate(hot_click):
+                if hot_item not in interacted_items and hot_item not in [x[0] for x in rank_item]:
+                    recom_item.append([row['user_id'], hot_item, -1 * hot_index])
+                    phase_recom_item.append([row['user_id'], hot_item, -1 * hot_index])
+                    hot_cover -= 1
+                if hot_cover <= 0:
+                    break
+    phase_recom_df = pd.DataFrame(phase_recom_item, columns=['user_id', 'item_id', 'sim'])
+    phase_recom_df.to_csv('./cache/features_cache/total_user_recall_{}.csv'.format(recall_num), index=False)
 
 
 def get_sim_item_5164(df_, user_col, item_col, use_iif=False):
