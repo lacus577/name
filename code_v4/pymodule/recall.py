@@ -48,7 +48,7 @@ def recall_5146():
     for c in range(now_phase + 1):
         phase_recom_item = []
         print('phase:', c)
-        click_pred = pd.read_csv(test_path + '/underexpose_test_qtime-{}.csv'.format(c), header=None,
+        click_pred = pd.read_csv(test_path + '/underexpose_test_click-{}/underexpose_test_qtime-{}.csv'.format(c, c), header=None,
                                  names=['user_id', 'time'])
 
         #     pred_user_time_dict = dict(zip(click_pred['user_id'], user_time_['time']))
