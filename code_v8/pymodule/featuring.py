@@ -378,40 +378,6 @@ def train_test_split(total_features, percentage=0.7):
 
     return train_data, valid_data
 
-def cal_time_interval(target_df, total_df):
-    # for i in range(target_df.shape[0]):
-    #     print(
-    #         'xxxxxxxxxx',
-    #         np.nanmean(
-    #             np.array(list(total_df[total_df['user_id'] == target_df.loc[i, 'user_id']]['time'][:-1])) -
-    #             np.array(list(total_df[total_df['user_id'] == target_df.loc[i, 'user_id']]['time'][1: ]))
-    #         )
-    #     )
-
-    return {
-        'user_click_interval_mean': target_df.apply(
-            lambda x: np.nanmean(
-                np.array(list(total_df[total_df['user_id'] == x['user_id']]['time'][:-1])) -
-                np.array(list(total_df[total_df['user_id'] == x['user_id']]['time'][1: ]))
-            ),
-            axis=1
-        ),
-        'user_click_interval_min': target_df.apply(
-            lambda x: np.nanmin(
-                np.array(list(total_df[total_df['user_id'] == x['user_id']]['time'][:-1])) -
-                np.array(list(total_df[total_df['user_id'] == x['user_id']]['time'][1: ]))
-            ),
-            axis=1
-        ),
-        'user_click_interval_max': target_df.apply(
-            lambda x: np.nanmax(
-                np.array(list(total_df[total_df['user_id'] == x['user_id']]['time'][:-1])) -
-                np.array(list(total_df[total_df['user_id'] == x['user_id']]['time'][1: ]))
-            ),
-            axis=1
-        )
-    }
-
 
 def cal_item_of_user_def(df, total_df):
     return {
@@ -727,7 +693,7 @@ def do_featuring(
     time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     print('统计特征 start time:{}'.format(time_str))
 
-    all_phase_click_in = all_phase_click_in.sort_values(['user_id', 'time'], ascending=False).reset_index(drop=True)
+    all_phase_click_in = all_phase_click_in.sort_values(['user_id', conf.new_time_name], ascending=False).reset_index(drop=True)
 
     ''' user点击序中user点击次数（即 点击深度 TODO 去做个统计：点击深度和冷门物品偏好的关系） -- 全量数据集统计 '''
     print('用户点击次数特征 doing')
@@ -778,7 +744,7 @@ def do_featuring(
     ''' user平均点击间隔、最大点击间隔、最小点击间隔 -- 需要分train和test两个集合统计 '''
     print('user平均点击间隔、最大点击间隔、最小点击间隔 doing')
     train_time_interval_df = \
-        all_phase_click_in.groupby('user_id').agg({'time': lambda x: ','.join([str(i) for i in list(x)])}).reset_index()
+        all_phase_click_in.groupby('user_id').agg({conf.new_time_name: lambda x: ','.join([str(i) for i in list(x)])}).reset_index()
     train_time_interval_df.columns = ['user_id', 'time_interval_arr']
     train_time_interval_df['time_interval_arr'] = train_time_interval_df.apply(
         lambda x: np.array(list(x['time_interval_arr'].split(',')), dtype=np.float)[:-1] -

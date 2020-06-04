@@ -68,7 +68,7 @@ def read_train_click(train_path, phase):
         train_path + '/underexpose_train_click-{phase}.csv'.format(phase=phase)
         , header=None
         # , nrows=nrows
-        , names=['user_id', 'item_id', 'time']
+        , names=['user_id', 'item_id', conf.org_time_name]
         , sep=','
         , dtype={'user_id': np.str, 'item_id': np.str, 'time': np.float}
     )
@@ -78,7 +78,7 @@ def read_test_click(test_path, phase):
         test_path + '/underexpose_test_click-{phase}/underexpose_test_click-{phase}.csv'.format(phase=phase)
         , header=None
         # , nrows=nrows
-        , names=['user_id', 'item_id', 'time']
+        , names=['user_id', 'item_id', conf.org_time_name]
         , sep=','
         , dtype={'user_id': np.str, 'item_id': np.str, 'time': np.float}
     )
@@ -88,7 +88,7 @@ def read_qtime(test_path, phase):
         test_path + '/underexpose_test_click-{phase}/underexpose_test_qtime-{phase}.csv'.format(phase=phase)
         , header=None
         # , nrows=nrows
-        , names=['user_id', 'time']
+        , names=['user_id', conf.org_time_name]
         , sep=','
         , dtype={'user_id': np.str, 'time': np.float}
     )
@@ -116,7 +116,7 @@ def del_dup(df):
     return df
 
 def process_time(df, time_stamp):
-    df.loc[:, 'time'] = df['time'] * time_stamp
+    df.loc[conf.new_time_name] = df[conf.org_time_name] * time_stamp
     return df
 
 def transfer_item_features_df2dict(item_features, dim):
@@ -276,7 +276,7 @@ def read_all_phase_click():
         # 删除待预测时间点 之后的点击数据 防止数据泄露
         # all_phase_click_666 = utils.del_qtime_future_click(all_phase_click)
         # 时间处理 乘上 1591891140， 否则时间做操作结果太小，防止溢出
-        all_phase_click_666 = process_time(all_phase_click, 1591891140)
+        all_phase_click_666 = process_time(all_phase_click, conf.time_puls)
 
         all_phase_click_666 = all_phase_click_666.sort_values(['user_id', 'time']).reset_index(drop=True)
         all_phase_click_666.to_csv(conf.click_cache_path, index=False)

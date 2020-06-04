@@ -66,7 +66,7 @@ if __name__ == '__main__':
 
     # 全量点击删除候选正样本 -- 模拟qtime预测
     all_phase_click_no_qtime = all_phase_click_no_qtime.append(candidate_positive_sample_df)
-    all_phase_click_no_qtime = all_phase_click_no_qtime.drop_duplicates(['user_id', 'item_id', 'time'], keep=False)
+    all_phase_click_no_qtime = all_phase_click_no_qtime.drop_duplicates(['user_id', 'item_id', conf.org_time_name], keep=False)
     all_phase_click_no_qtime = all_phase_click_no_qtime.sort_values(['user_id', 'item_id']).reset_index(drop=True)
 
     hot_df = all_phase_click_no_qtime.groupby('item_id')['user_id'].count().reset_index()

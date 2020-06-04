@@ -74,3 +74,8 @@ ITEM_CF_SCORE = 'sim'
 
 ''' 数据分段， 官方给的时间是10+天， 先假设给的是14天， 将全量数据分成14段， 一段表示一天 '''
 days = 14
+
+''' 时间预处理 '''
+org_time_name = 'time'
+new_time_name = 'new_time'
+time_puls = 1591891140
