@@ -30,7 +30,7 @@ is_recall_feature_cached = True
 itemcf_num = 5
 
 ''' 候选正样本个数 '''
-candidate_positive_num = 3
+candidate_positive_num = 1
 
 ''' 负样本数量 '''
 negative_num = 15

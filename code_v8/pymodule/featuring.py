@@ -555,7 +555,7 @@ def process_after_featuring(df, is_recall=False):
     #    '0_item_deg', '1_item_deg', 'top_1_item_deg', '2_item_deg',
     #    'top_2_item_deg', '3_item_deg', 'top_3_item_deg', '4_item_deg',
     #    'top_4_item_deg']
-    features_columns = ['user_id', 'item_id',
+    features_columns = ['user_id', 'item_id', conf.ITEM_CF_SCORE,
                         'click_item_user_sim', 'click_user_item_sim', 'user_click_num',
                         'user_click_interval_mean', 'user_click_interval_min',
                         'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
