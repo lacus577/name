@@ -91,6 +91,9 @@ if __name__ == '__main__':
     else:
         print('getting samples ...')
         # 候选正样本召回
+        # tmp_df = candidate_positive_sample_df.copy(deep=True)
+        # tmp_df.loc[:, 'user_id'] = tmp_df['user_id'].astype(np.int)
+        # tmp_df.loc[:, 'item_id'] = tmp_df['item_id'].astype(np.int)
         _, recom_item = recall.items_recommod_5164(
             candidate_positive_sample_df, item_sim_list, all_phase_click_no_qtime, list(hot_df['item_id'])
         )
@@ -101,7 +104,8 @@ if __name__ == '__main__':
 
         # 正样本确认， 负样本构建
         candidate_positive_sample_df['label'] = 1
-        tmp_total_df = candidate_recall_df.merge(candidate_positive_sample_df, on=['user_id', 'item_id'])
+        candidate_recall_df['label'] = 0
+        tmp_total_df = candidate_recall_df.merge(candidate_positive_sample_df, on=['user_id', 'item_id'], how='left')
             # 命中user及对应命中点击item
         positive_sample_df = tmp_total_df[tmp_total_df['label'] == 1]
             # TODO 暂时不对负样本数量做控制，正负样本比可能达到1：50
