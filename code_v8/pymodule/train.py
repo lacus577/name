@@ -104,12 +104,12 @@ if __name__ == '__main__':
 
         # 正样本确认， 负样本构建
         candidate_positive_sample_df['label'] = 1
-        candidate_recall_df['label'] = 0
         tmp_total_df = candidate_recall_df.merge(candidate_positive_sample_df, on=['user_id', 'item_id'], how='left')
             # 命中user及对应命中点击item
         positive_sample_df = tmp_total_df[tmp_total_df['label'] == 1]
             # TODO 暂时不对负样本数量做控制，正负样本比可能达到1：50
         sample_df = tmp_total_df[tmp_total_df['user_id'].isin(positive_sample_df['user_id'])]
+        sample_df.loc[sample_df['label'] != 1, 'label'] = 0
         if sample_df.shape[0] == 0:
             raise Exception('召回结果没有任何命中！')
         sample_df.to_csv(conf.samples_cache_path, index=False)
