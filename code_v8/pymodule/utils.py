@@ -116,7 +116,7 @@ def del_dup(df):
     return df
 
 def process_time(df, time_stamp):
-    df.loc[conf.new_time_name] = df[conf.org_time_name] * time_stamp
+    df[conf.new_time_name] = df[conf.org_time_name] * time_stamp
     return df
 
 def transfer_item_features_df2dict(item_features, dim):
