@@ -753,22 +753,23 @@ def do_featuring(
     )
     train_time_interval_dict = utils.two_columns_df2dict(train_time_interval_df)
 
+    # todo 没有使用点击次数归一化
     features_df['user_click_interval_mean'] = \
         features_df.apply(
-            lambda x: np.nanmean(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
-                x['user_id']) is not None else np.nan,
+            lambda x: np.nanmean(train_time_interval_dict.get(x['user_id']))
+            if x is not None or 0 < len(x) or train_time_interval_dict.get(x['user_id']) is not None else None,
             axis=1
         )
     features_df['user_click_interval_min'] = \
         features_df.apply(
-            lambda x: np.nanmin(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
-                x['user_id']) is not None else np.nan,
+            lambda x: np.nanmin(train_time_interval_dict.get(x['user_id']))
+            if x is not None or 0 < len(x) or train_time_interval_dict.get(x['user_id']) is not None else None,
             axis=1
         )
     features_df['user_click_interval_max'] = \
         features_df.apply(
-            lambda x: np.nanmax(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
-                x['user_id']) is not None else np.nan,
+            lambda x: np.nanmax(train_time_interval_dict.get(x['user_id']))
+            if x is not None or 0 < len(x) or train_time_interval_dict.get(x['user_id']) is not None else None,
             axis=1
         )
     features_df.to_csv(feature_caching_path, index=False)

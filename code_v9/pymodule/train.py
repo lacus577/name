@@ -67,7 +67,8 @@ if __name__ == '__main__':
     step = (max_time - min_time) // conf.days
 
     total_feature_df = pd.DataFrame()
-    for end_time in range(min_time, max_time, step):
+    for end_time in range(min_time + step, max_time, step):
+        print('period {} ...'.format(end_time))
         period_click_df = all_phase_click_no_qtime[
             (all_phase_click_no_qtime[conf.new_time_name] <= end_time) &
             (all_phase_click_no_qtime[conf.new_time_name] >= min_time)
@@ -135,7 +136,7 @@ if __name__ == '__main__':
             if sample_df.shape[0] == 0:
                 raise Exception('召回结果没有任何命中！')
             sample_df.to_csv(conf.samples_cache_path.format(end_time), index=False)
-            assert sample_df[sample_df['label'] == 0].shape[0] / sample_df[sample_df['label'] == 1] == conf.recall_num
+            assert sample_df[sample_df['label'] == 0].shape[0] / sample_df[sample_df['label'] == 1].shape[0] == conf.recall_num - 1
 
         ''' 特征工程 '''
         if conf.is_feature_cached:
