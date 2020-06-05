@@ -17,7 +17,7 @@ from pymodule.eval import metrics_recall
 from pymodule import recall
 from pymodule.featuring import matrix_word2vec_embedding, get_train_test_data, \
     get_user_features, train_test_split, cal_user_item_sim, cal_txt_img_sim, \
-    cal_click_sim, cal_time_interval, cal_item_of_user_def, cal_statistic_features, \
+    cal_click_sim, cal_item_of_user_def, cal_statistic_features, \
     cal_item_distance, cal_user_click_num, cal_total_statistic_features, process_after_featuring, \
     get_samples_v1, do_featuring, get_recall_sample
 from pymodule import utils
@@ -91,14 +91,18 @@ if __name__ == '__main__':
         print('loaded samples, shape:{}'.format(sample_df.shape))
     else:
         print('getting samples ...')
-        # 候选正样本召回
-        # tmp_df = candidate_positive_sample_df.copy(deep=True)
-        # tmp_df.loc[:, 'user_id'] = tmp_df['user_id'].astype(np.int)
-        # tmp_df.loc[:, 'item_id'] = tmp_df['item_id'].astype(np.int)
-        _, recom_item = recall.items_recommod_5164(
-            candidate_positive_sample_df, item_sim_list, all_phase_click_no_qtime, list(hot_df['item_id'])
-        )
-        candidate_recall_df = pd.DataFrame(recom_item, columns=['user_id', 'item_id', 'sim'])
+        if os.path.exists(conf.total_user_recall_path):
+            candidate_recall_df = pd.read_csv(conf.total_user_recall_path, dtype={'user_id': np.str, 'item_id': np.str})
+        else:
+            # 候选正样本召回
+            # tmp_df = candidate_positive_sample_df.copy(deep=True)
+            # tmp_df.loc[:, 'user_id'] = tmp_df['user_id'].astype(np.int)
+            # tmp_df.loc[:, 'item_id'] = tmp_df['item_id'].astype(np.int)
+            _, recom_item = recall.items_recommod_5164(
+                candidate_positive_sample_df, item_sim_list, all_phase_click_no_qtime, list(hot_df['item_id'])
+            )
+            candidate_recall_df = pd.DataFrame(recom_item, columns=['user_id', 'item_id', 'sim'])
+            candidate_recall_df.to_csv(conf.total_user_recall_path, index=False)
             # 取top50，待top50调试OK之后再放开
         candidate_recall_df = candidate_recall_df.sort_values('sim').reset_index(drop=True)
         candidate_recall_df = candidate_recall_df.groupby('user_id').head(conf.recall_num).reset_index(drop=True)
