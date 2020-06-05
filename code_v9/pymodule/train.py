@@ -62,9 +62,9 @@ if __name__ == '__main__':
     all_phase_click_no_qtime = all_phase_click[all_phase_click['train_or_test'] != 'predict']
 
     # 将数据按天切分成14天，从第七天开始构建样本
-    min_time = np.min(all_phase_click_no_qtime[conf.new_time_name])
-    max_time = np.max(all_phase_click_no_qtime[conf.new_time_name])
-    step = (max_time - min_time) / conf.days
+    min_time = int(np.min(all_phase_click_no_qtime[conf.new_time_name]))
+    max_time = int(np.max(all_phase_click_no_qtime[conf.new_time_name])) + 1
+    step = (max_time - min_time) // conf.days
 
     total_feature_df = pd.DataFrame()
     for end_time in range(min_time, max_time, step):
