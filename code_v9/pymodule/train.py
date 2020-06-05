@@ -77,11 +77,15 @@ if __name__ == '__main__':
         period_click_df = period_click_df.sort_values(['user_id', conf.new_time_name]).reset_index()
 
         candidate_positive_sample_df = period_click_df.groupby('user_id').tail(1).reset_index()
+        assert candidate_positive_sample_df.shape[0] == len(set(candidate_positive_sample_df['user_id']))
             # 正样本删除，后面要用于构建相似度矩阵
         period_click_df = period_click_df.append(candidate_positive_sample_df)
         period_click_df = \
             period_click_df.drop_duplicates(['user_id', 'item_id', conf.new_time_name], keep=False)
         period_click_df = period_click_df.sort_values(['user_id', conf.new_time_name]).reset_index()
+        assert period_click_df.merge(
+            candidate_positive_sample_df, on=['user_id', 'item_id', conf.new_time_name], how='inner'
+        ).shape[0] == 0
 
         hot_df = period_click_df.groupby('item_id')['user_id'].count().reset_index()
         hot_df.columns = ['item_id', 'item_deg']
@@ -95,6 +99,7 @@ if __name__ == '__main__':
                 recall.get_sim_item_5164(period_click_df, 'user_id', 'item_id', use_iif=False)
 
             pickle.dump(item_sim_list, open(conf.sim_list_path.format(end_time), 'wb'))
+        assert len(set(item_sim_list.keys())) == len(set(period_click_df['item_id']))
 
         if conf.is_samples_cached:
             sample_df = pd.read_csv(conf.samples_cache_path.format(end_time), dtype={'user_id': np.str, 'item_id': np.str})
@@ -113,6 +118,7 @@ if __name__ == '__main__':
                 )
                 candidate_recall_df = pd.DataFrame(recom_item, columns=['user_id', 'item_id', 'sim'])
                 candidate_recall_df.to_csv(conf.total_user_recall_path.format(end_time), index=False)
+                assert len(set(candidate_recall_df['user_id'])) == len(set(candidate_positive_sample_df['user_id']))
                 # 取top50，待top50调试OK之后再放开
             candidate_recall_df = candidate_recall_df.sort_values('sim').reset_index(drop=True)
             candidate_recall_df = candidate_recall_df.groupby('user_id').head(conf.recall_num).reset_index(drop=True)
@@ -129,28 +135,29 @@ if __name__ == '__main__':
             if sample_df.shape[0] == 0:
                 raise Exception('召回结果没有任何命中！')
             sample_df.to_csv(conf.samples_cache_path.format(end_time), index=False)
+            assert sample_df[sample_df['label'] == 0].shape[0] / sample_df[sample_df['label'] == 1] == conf.recall_num
 
-            ''' 特征工程 '''
-            if conf.is_feature_cached:
-                feature_df = pd.read_csv(
-                    conf.features_cache_path.format(end_time),
-                    dtype={'user_id': np.str, 'item_id': np.str}
-                )
+        ''' 特征工程 '''
+        if conf.is_feature_cached:
+            feature_df = pd.read_csv(
+                conf.features_cache_path.format(end_time),
+                dtype={'user_id': np.str, 'item_id': np.str}
+            )
 
-                if conf.subsampling:
-                    feature_df = feature_df[feature_df['user_id'].isin(period_click_df['user_id'])]
-                print('loaded features, shape:{}'.format(feature_df.shape))
-            else:
-                feature_df = do_featuring(
-                    period_click_df, sample_df, hot_df, conf.process_num,
-                    item_txt_embedding_dim, is_recall=False,
-                    feature_caching_path=conf.features_cache_path.format(end_time),
-                    itemcf_score_maxtrix=item_sim_list
-                )
-                total_feature_df = total_feature_df.append(feature_df)
-
+            if conf.subsampling:
+                feature_df = feature_df[feature_df['user_id'].isin(period_click_df['user_id'])]
+            print('loaded features, shape:{}'.format(feature_df.shape))
+        else:
+            feature_df = do_featuring(
+                period_click_df, sample_df, hot_df, conf.process_num,
+                item_txt_embedding_dim, is_recall=False,
+                feature_caching_path=conf.features_cache_path.format(end_time),
+                itemcf_score_maxtrix=item_sim_list
+            )
             assert sample_df.shape[0] == feature_df.shape[0]
             assert len(set(sample_df['user_id'])) == len(set(feature_df['user_id']))
+
+        total_feature_df = total_feature_df.append(feature_df)
 
     # 这里的hot_df与训练集不是同步的，暂时凑合着用
     hot_df = all_phase_click_no_qtime.groupby('item_id')['user_id'].count().reset_index()
@@ -180,8 +187,6 @@ if __name__ == '__main__':
         ''' 模型训练 '''
         time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         print('------------------------ 模型训练 start time:{}'.format(time_str))
-        # submit = train_model_lgb(feature_all, recall_rate=hit_rate, hot_list=hot_list, valid=0.2, topk=50, num_boost_round=1, early_stopping_rounds=1)
-        # submit = train_model_rf(train_test, recall_rate=1, hot_list=hot_list, valid=0.2, topk=50)
         # model = rank_rf(train_x, train_y)
         model = rank_xgb(train_x, train_y)
         one_train_auc = roc_auc_score(train_y, model.predict_proba(train_x)[:, 1])
@@ -246,7 +251,10 @@ if __name__ == '__main__':
                 recall_feature_df = recall_feature_df[recall_feature_df['user_id'].isin(one_phase_recall_item_df['user_id'])]
             print('load recall features: phase:{} shape:{}'.format(phase, recall_feature_df.shape[0]))
         else:
-            # featuring
+            if os.path.exists(conf.total_sim_list_path):
+                item_sim_list = pickle.load(open(conf.total_sim_list_path, 'rb'))
+            else:
+                raise Exception('no total item_sim_list')
             recall_feature_df = do_featuring(
                 all_phase_click_no_qtime, recall_sample_df, hot_df, conf.process_num,
                 item_txt_embedding_dim, is_recall=True, feature_caching_path=conf.recall_feature_path.format(phase),

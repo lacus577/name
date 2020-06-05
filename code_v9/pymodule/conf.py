@@ -56,6 +56,7 @@ click_cache_path = './cache/features_cache/click.csv'
 
 ''' 召回结果缓存路径 '''
 sim_list_path = './cache/features_cache/item_sim_list_{}'
+total_sim_list_path = './cache/features_cache/item_sim_list'
 # recall_cache_path = './cache/features_cache/test_user_recall_{}.csv'
 recall_cache_path = './cache/features_cache/phase_{}_recall_500.csv'
 recall_sample_path = './cache/features_cache/test_user_recall_sample_{}.csv'
