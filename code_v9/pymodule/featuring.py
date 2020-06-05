@@ -543,88 +543,6 @@ def process_after_featuring(df, is_recall=False):
 
     return df
 
-
-def get_samples_v1(df, item_info_df, total_user_recall_df, time_interval_thr, negative_num, dim, process_num):
-    '''
-    第一版样本如下：
-    1. 最近一个session构建user_feature（一个session 280以内）
-    2. qtime前面的那次点击也做为正样本
-    3. 负样本随机采样10个（剔除掉此用户点击的）
-    :param df:
-    :return:
-    '''
-
-    # 正样本构建 -- 所有不在test集合中的user点击都作为正样本
-    # positive_sample_df = df[df['train_or_test'] == 'train'].reset_index(drop=True)
-    positive_sample_df = df.sample(frac=1, random_state=1).groupby('user_id').head(5)
-    positive_sample_df['label'] = 1
-
-    # 负样本构建 -- 召回结果中，不是正样本的都是负样本
-    train_user_set = set(df['user_id'])
-    user_recall_df = total_user_recall_df[total_user_recall_df['user_id'].isin(train_user_set)]
-    user_recall_df = user_recall_df.merge(positive_sample_df, on=['user_id', 'item_id'], how='left')
-    negative_sample_df = user_recall_df[user_recall_df['label'] != 1]
-    negative_sample_df.loc[:, 'label'] = 0
-    # 每个用户取negative_num个负样本
-    negative_sample_df = negative_sample_df.sample(frac=1, random_state=1).groupby('user_id').head(5 * conf.negative_num)
-    negative_sample_df = negative_sample_df.reset_index(drop=True)
-
-    result_pd = positive_sample_df.append(negative_sample_df)
-    #
-    # item_info_dict = utils.transfer_item_features_df2dict(item_info_df, dim)
-    # result_pd['item_txt_vec'] = result_pd.apply(
-    #     lambda x: item_info_dict['txt_vec'].get(x['item_id']),
-    #     axis=1
-    # )
-    #
-    # result_pd['item_img_vec'] = result_pd.apply(
-    #     lambda x: item_info_dict['img_vec'].get(x['item_id']),
-    #     axis=1
-    # )
-
-    return result_pd
-
-
-def make_samples(start_index, sample_list, item_info_dict, negative_sample_dict):
-    sample_df = pd.DataFrame()
-    for i in tqdm(range(len(sample_list))):
-        user = sample_list[i][0]
-        item = sample_list[i][1]
-        # user_txt_embedding = np.nansum([item_info_dict['txt_vec'].get(j) for j in sample_list[i][2: ]], axis=0)
-        # user_img_embedding = np.nansum([item_info_dict['img_vec'].get(j) for j in sample_list[i][2: ]], axis=0)
-        user_txt_embedding = np.zeros(list(item_info_dict['txt_vec'].values())[0].shape)
-        user_img_embedding = np.zeros(list(item_info_dict['img_vec'].values())[0].shape)
-        for item_id in sample_list[i][2:]:
-            if item_info_dict['txt_vec'].get(str(item_id)) is not None:
-                # assert type(item_info_dict['txt_vec'].get(str(item_id))) isinstance(x, np.ndarray)
-                user_txt_embedding += item_info_dict['txt_vec'].get(str(item_id))
-            if item_info_dict['img_vec'].get(str(item_id)) is not None:
-                user_img_embedding += item_info_dict['img_vec'].get(str(item_id))
-
-        one_user_df = [[
-            user, item,
-            user_txt_embedding, user_img_embedding,
-            item_info_dict['txt_vec'].get(item),
-            item_info_dict['img_vec'].get(item),
-            1 # 正样本
-        ]]
-
-        for negative_item in negative_sample_dict[start_index + i]:
-            one_user_df.append(
-                [
-                    user, negative_item,
-                    user_txt_embedding, user_img_embedding,
-                    item_info_dict['txt_vec'].get(negative_item),
-                    item_info_dict['img_vec'].get(negative_item),
-                    0 # 负样本
-                ]
-            )
-
-        sample_df = sample_df.append(one_user_df)
-
-    sample_df.columns = ['user_id', 'item_id', 'user_txt_vec', 'user_img_vec', 'item_txt_vec', 'item_img_vec', 'label']
-    return sample_df
-
 def do_featuring(
         all_phase_click_in,
         sample_df,
@@ -834,7 +752,7 @@ def do_featuring(
     user2click_span_dict = utils.get_user2click_span_dict(all_phase_click_in)
     features_df['user_span_click'] = features_df.apply(
         lambda x: x['user_click_num'] / user2click_span_dict.get(x['user_id'])
-        if user2click_span_dict.get(x['user_id']) is not None else None,
+        if user2click_span_dict.get(x['user_id']) is not None and user2click_span_dict.get(x['user_id']) > 0 else None,
         axis=1
     )
     features_df.to_csv(feature_caching_path, index=False)
