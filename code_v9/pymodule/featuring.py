@@ -757,21 +757,28 @@ def do_featuring(
     features_df['user_click_interval_mean'] = \
         features_df.apply(
             lambda x: np.nanmean(train_time_interval_dict.get(x['user_id']))
-            if 0 < len(train_time_interval_dict.get(x['user_id'])) and train_time_interval_dict.get(x['user_id']) is not None else None,
+            if train_time_interval_dict.get(x['user_id']) is not None
+               and 0 < len(train_time_interval_dict.get(x['user_id']))
+               and train_time_interval_dict.get(x['user_id']) is not None
+            else None,
             axis=1
         )
     features_df['user_click_interval_min'] = \
         features_df.apply(
             lambda x: np.nanmin(train_time_interval_dict.get(x['user_id']))
-            if 0 < len(train_time_interval_dict.get(x['user_id'])) and train_time_interval_dict.get(
-                x['user_id']) is not None else None,
+            if train_time_interval_dict.get(x['user_id']) is not None
+               and 0 < len(train_time_interval_dict.get(x['user_id']))
+               and train_time_interval_dict.get(x['user_id']) is not None
+            else None,
             axis=1
         )
     features_df['user_click_interval_max'] = \
         features_df.apply(
             lambda x: np.nanmax(train_time_interval_dict.get(x['user_id']))
-            if 0 < len(train_time_interval_dict.get(x['user_id'])) and train_time_interval_dict.get(
-                x['user_id']) is not None else None,
+            if train_time_interval_dict.get(x['user_id']) is not None
+               and 0 < len(train_time_interval_dict.get(x['user_id']))
+               and train_time_interval_dict.get(x['user_id']) is not None
+            else None,
             axis=1
         )
     features_df.to_csv(feature_caching_path, index=False)
