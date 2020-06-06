@@ -43,6 +43,9 @@ org_embedding_dim = 128
 ''' 处理后维度'''
 new_embedding_dim = 32
 
+''' 留出验证次数 '''
+k = 5
+
 
 ''' -------------------------- constant --------------------------- '''
 train_path = '../../../../data/underexpose_train'

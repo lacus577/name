@@ -133,9 +133,9 @@ def evaluate(submit_fname,
         # except Exception as _:
         #     raise Exception('error occurred during evaluation')
 
-    score = float(scores[0]),
+    score = float(scores[0])
     ndcg_50_full = float(scores[0])
-    ndcg_50_half = float(scores[1]),
+    ndcg_50_half = float(scores[1])
     hitrate_50_full = float(scores[2])
     hitrate_50_half = float(scores[3])
 

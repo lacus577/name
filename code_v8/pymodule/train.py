@@ -138,46 +138,58 @@ if __name__ == '__main__':
 
     assert sample_df.shape[0] == feature_df.shape[0]
     assert len(set(sample_df['user_id'])) == len(set(feature_df['user_id']))
-    ''' 训练集/验证集划分 '''
-    train_df, valid_df = train_test_split(feature_df)
 
-    qtime_user_df = all_phase_click[all_phase_click['train_or_test'] == 'predict']
-    print(
-        '训练集命中{}个qtime的user.'.format(
-            len(set(train_df[train_df['user_id'].isin(qtime_user_df['user_id'])]['user_id']))
+    train_auc = valid_auc = 0
+    pre_score_arr = np.zeros(5).reshape(-1, )
+    rank_score_arr = np.zeros(5).reshape(-1, )
+    for i in range(conf.k):
+        ''' 训练集/验证集划分 '''
+        train_df, valid_df = train_test_split(feature_df)
+
+        qtime_user_df = all_phase_click[all_phase_click['train_or_test'] == 'predict']
+        print(
+            '训练集命中{}个qtime的user.'.format(
+                len(set(train_df[train_df['user_id'].isin(qtime_user_df['user_id'])]['user_id']))
+            )
         )
-    )
 
-    train_x = train_df[train_df.columns.difference(['user_id', 'item_id', 'label'])].values
-    train_y = train_df['label'].values
+        train_x = train_df[train_df.columns.difference(['user_id', 'item_id', 'label'])].values
+        train_y = train_df['label'].values
 
-    valid_df = valid_df.sort_values('sim').reset_index(drop=True)
-    valid_x = valid_df[valid_df.columns.difference(['user_id', 'item_id', 'label'])].values
-    valid_y = valid_df['label'].values
+        valid_df = valid_df.sort_values('sim').reset_index(drop=True)
+        valid_x = valid_df[valid_df.columns.difference(['user_id', 'item_id', 'label'])].values
+        valid_y = valid_df['label'].values
 
-    ''' 模型训练 '''
+        ''' 模型训练 '''
+        time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        print('------------------------ 模型训练 start time:{}'.format(time_str))
+        # submit = train_model_lgb(feature_all, recall_rate=hit_rate, hot_list=hot_list, valid=0.2, topk=50, num_boost_round=1, early_stopping_rounds=1)
+        # submit = train_model_rf(train_test, recall_rate=1, hot_list=hot_list, valid=0.2, topk=50)
+        # model = rank_rf(train_x, train_y)
+        model = rank_xgb(train_x, train_y)
+        print('train set: auc:{}'.format(roc_auc_score(train_y, model.predict_proba(train_x)[:, 1])))
+        with open('./cache/rf.pickle', 'wb') as f:
+            pickle.dump(model, f)
+
+        ''' 模型验证 '''
+        time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        print('------------------------ 模型验证 start time:{}'.format(time_str))
+        pre_y = model.predict_proba(valid_x)[:, 1]
+        one_valid_auc = roc_auc_score(valid_y, pre_y)
+        valid_auc += one_valid_auc
+        print('valid set: auc:{}'.format(one_valid_auc))
+        answer = make_answer(valid_df[valid_df['label'] == 1], hot_df, phase=1)
+
+        print('排序前score:')
+        pre_score_arr += my_eval(list(valid_df['sim']), valid_df, answer)
+        print('排序后score：')
+        rank_score_arr += my_eval(pre_y, valid_df, answer)
+
+    print('{}次留出验证，平均train auc:{}，平均valid auc:{}'.format(conf.k, train_auc / conf.k, valid_auc / conf.k))
+    print('平均排序前score:{}'.format(pre_score_arr / conf.k))
+    print('平均排序后score:{}'.format(rank_score_arr / conf.k))
+
     time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-    print('------------------------ 模型训练 start time:{}'.format(time_str))
-    # submit = train_model_lgb(feature_all, recall_rate=hit_rate, hot_list=hot_list, valid=0.2, topk=50, num_boost_round=1, early_stopping_rounds=1)
-    # submit = train_model_rf(train_test, recall_rate=1, hot_list=hot_list, valid=0.2, topk=50)
-    # model = rank_rf(train_x, train_y)
-    model = rank_xgb(train_x, train_y)
-    print('train set: auc:{}'.format(roc_auc_score(train_y, model.predict_proba(train_x)[:, 1])))
-    with open('./cache/rf.pickle', 'wb') as f:
-        pickle.dump(model, f)
-
-    ''' 模型验证 '''
-    print('------------------------ 模型验证 start time:{}'.format(time_str))
-    time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-    pre_y = model.predict_proba(valid_x)[:, 1]
-    print('valid set: auc:{}'.format(roc_auc_score(valid_y, pre_y)))
-    answer = make_answer(valid_df[valid_df['label'] == 1], hot_df, phase=1)
-
-    print('排序前score:')
-    my_eval(list(valid_df['sim']), valid_df, answer)
-    print('排序后score：')
-    my_eval(pre_y, valid_df, answer)
-
     print('------------------------ underexpose_test_qtime 预测 start time:{}'.format(time_str))
     submit_all = pd.DataFrame()
     for phase in range(0, conf.now_phase + 1):
