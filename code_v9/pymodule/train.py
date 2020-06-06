@@ -107,6 +107,10 @@ if __name__ == '__main__':
             if conf.subsampling:
                 sample_df = sample_df[sample_df['user_id'].isin(period_click_df['user_id'])]
 
+            tmp = sample_df[sample_df['label'] == 1][['user_id', 'item_id']]
+            tmp.columns = ['user_id', 'truth_item_id']
+            sample_df = sample_df.merge(tmp, on='user_id', how='left')
+
             print('loaded samples, shape:{}'.format(sample_df.shape))
         else:
             print('getting samples ...')
@@ -133,6 +137,10 @@ if __name__ == '__main__':
             # TODO 暂时不对负样本数量做控制，正负样本比可能达到1：50
             sample_df = tmp_total_df[tmp_total_df['user_id'].isin(positive_sample_df['user_id'])]
             sample_df.loc[sample_df['label'] != 1, 'label'] = 0
+            tmp = positive_sample_df[['user_id', 'item_id']]
+            tmp.columns = ['user_id', 'truth_item_id']
+            assert len(set(tmp['user_id'])) == tmp.shape[0]
+            sample_df = sample_df.merge(tmp, on='user_id', how='left')
             if sample_df.shape[0] == 0:
                 raise Exception('召回结果没有任何命中！')
             sample_df.to_csv(conf.samples_cache_path.format(end_time), index=False)
@@ -144,6 +152,7 @@ if __name__ == '__main__':
                 conf.features_cache_path.format(end_time),
                 dtype={'user_id': np.str, 'item_id': np.str}
             )
+            feature_df['truth_item_id'] = sample_df['truth_item_id']
 
             if conf.subsampling:
                 feature_df = feature_df[feature_df['user_id'].isin(period_click_df['user_id'])]

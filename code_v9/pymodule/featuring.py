@@ -368,10 +368,11 @@ def train_test_split(total_features, percentage=0.7):
     # )
 
     # 验证集中每个user只保留一个label为1的正样本, 其他放到训练集中
-    positive_valid_data = tmp_valid_data[tmp_valid_data['label'] == 1].drop_duplicates(['user_id'], keep='last')
-    negative_valid_data = tmp_valid_data[tmp_valid_data['label'] == 0]
+    valid_data = tmp_valid_data.groupby(['user_id', 'truth_item_id']).head(conf.recall_num).reset_index()
+    # positive_valid_data = tmp_valid_data[tmp_valid_data['label'] == 1].drop_duplicates(['user_id'], keep='last')
+    # negative_valid_data = tmp_valid_data[tmp_valid_data['label'] == 0]
     # negative_valid_data = negative_valid_data.sample(frac=1, random_state=1).groupby('user_id').head(conf.recall_num)
-    valid_data = positive_valid_data.append(negative_valid_data)
+    # valid_data = positive_valid_data.append(negative_valid_data)
     assert len(set(valid_data['user_id'])) == valid_data[valid_data['label'] == 1].shape[0]
     # tmp_valid_data = tmp_valid_data.append(valid_data).drop_duplicates(['user_id', 'item_id', 'label'], keep=False)
     # train_data = train_data.append(tmp_valid_data)
@@ -539,7 +540,7 @@ def process_after_featuring(df, is_recall=False):
     if is_recall:
         df = df[features_columns]
     else:
-       df = df[features_columns + ['label']]
+       df = df[features_columns + ['label', 'truth_item_id']]
 
     return df
 
