@@ -348,7 +348,7 @@ def train_test_split(total_features, percentage=0.7):
     df_user = pd.DataFrame(list(set(total_features['user_id'])))
     df_user.columns = ['user_id']
 
-    df = df_user.sample(frac=1.0, random_state=1)  # 打散
+    df = df_user.sample(frac=1.0, random_state=None)  # 打散
 
     cut_idx = int(round(percentage * df.shape[0]))
     df_train_0, df_train_1 = df.iloc[:cut_idx], df.iloc[cut_idx:]
