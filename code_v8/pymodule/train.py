@@ -19,7 +19,7 @@ from pymodule.featuring import matrix_word2vec_embedding, get_train_test_data, \
     get_user_features, train_test_split, cal_user_item_sim, cal_txt_img_sim, \
     cal_click_sim, cal_item_of_user_def, cal_statistic_features, \
     cal_item_distance, cal_user_click_num, cal_total_statistic_features, process_after_featuring, \
-    get_samples_v1, do_featuring, get_recall_sample
+    do_featuring, get_recall_sample
 from pymodule import utils
 from pymodule.eval import evaluate, make_answer, my_eval
 from pymodule.recall import get_sim_item, recommend
@@ -106,7 +106,7 @@ if __name__ == '__main__':
             candidate_recall_df = pd.DataFrame(recom_item, columns=['user_id', 'item_id', 'sim'])
             candidate_recall_df.to_csv(conf.total_user_recall_path, index=False)
             # 取top50，待top50调试OK之后再放开
-        candidate_recall_df = candidate_recall_df.sort_values('sim').reset_index(drop=True)
+        candidate_recall_df = candidate_recall_df.sort_values('sim', ascending=False).reset_index(drop=True)
         candidate_recall_df = candidate_recall_df.groupby('user_id').head(conf.recall_num).reset_index(drop=True)
 
         # 正样本确认， 负样本构建
@@ -141,8 +141,8 @@ if __name__ == '__main__':
     assert sample_df.shape[0] == feature_df.shape[0]
     assert len(set(sample_df['user_id'])) == len(set(feature_df['user_id']))
 
-    # 加入user属性
-    feature_df = feature_df.merge(user_info_df, on='user_id', how='left')
+    # 加入user属性 -- ndcg降低1%左右
+    # feature_df = feature_df.merge(user_info_df, on='user_id', how='left')
 
     train_auc = valid_auc = 0
     pre_score_arr = np.zeros(5).reshape(-1, )

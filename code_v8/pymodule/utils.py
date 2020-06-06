@@ -157,7 +157,7 @@ def save_pre_as_submit_format_csv(data_df, out_y):
 
 
 def get_user2kitem_dict(df, k):
-    df = df.sort_values(['user_id', 'time']).reset_index()
+    df = df.sort_values(['user_id', 'time'], ascending=False).reset_index()
     df = df.groupby('user_id').head(k)
     df = df.groupby('user_id').agg({'item_id': lambda x: ','.join(list(x))}).reset_index()
     df.loc[:, 'item_id'] = df.apply(
