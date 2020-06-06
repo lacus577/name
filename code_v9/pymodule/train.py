@@ -160,7 +160,8 @@ if __name__ == '__main__':
 
         total_feature_df = total_feature_df.append(feature_df)
 
-    print('feature shape:{}'.format(total_feature_df.shape))
+    assert total_feature_df[total_feature_df['label'] == 1].shape[0] == len(set(total_feature_df['user_id']))
+    print('feature shape:{}, positive feature num:{}'.format(total_feature_df.shape, total_feature_df[total_feature_df['label'] == 1].shape[0]))
     # 这里的hot_df与训练集不是同步的，暂时凑合着用
     hot_df = all_phase_click_no_qtime.groupby('item_id')['user_id'].count().reset_index()
     hot_df.columns = ['item_id', 'item_deg']
