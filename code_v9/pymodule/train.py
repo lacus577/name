@@ -155,8 +155,11 @@ if __name__ == '__main__':
                 feature_caching_path=conf.features_cache_path.format(end_time),
                 itemcf_score_maxtrix=item_sim_list
             )
-            assert sample_df.shape[0] == feature_df.shape[0]
-            assert len(set(sample_df['user_id'])) == len(set(feature_df['user_id']))
+            
+        assert sample_df.shape[0] == feature_df.shape[0]
+        assert len(set(sample_df['user_id'])) == len(set(feature_df['user_id']))
+        assert sample_df[sample_df['label'] == 1].shape[0] == len(set(sample_df['user_id']))
+        assert feature_df[feature_df['label'] == 1].shape[0] == len(set(feature_df['user_id']))
 
         total_feature_df = total_feature_df.append(feature_df)
 
