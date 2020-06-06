@@ -166,8 +166,8 @@ if __name__ == '__main__':
     hot_df.columns = ['item_id', 'item_deg']
     hot_df = hot_df.sort_values('item_deg', ascending=False).reset_index(drop=True)
     train_auc = valid_auc = 0
-    pre_score_arr = np.zeros(5).reshape(1, )
-    rank_score_arr = np.zeros(5).reshape(1, )
+    pre_score_arr = np.zeros(5).reshape(-1, )
+    rank_score_arr = np.zeros(5).reshape(-1, )
     for i in range(conf.k):
         ''' 训练集/验证集划分 '''
         train_df, valid_df = train_test_split(total_feature_df)

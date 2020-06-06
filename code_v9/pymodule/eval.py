@@ -44,7 +44,7 @@ def my_eval(pre_y, valid_df, answer, phase=-1):
         )
     )
 
-    return np.array([score, ndcg_50_full, ndcg_50_half, hitrate_50_full, hitrate_50_half]).reshape(1, )
+    return np.array([score, ndcg_50_full, ndcg_50_half, hitrate_50_full, hitrate_50_half]).reshape(-1, )
 
 # submit_fname is the path to the file submitted by the participants.
 # debias_track_answer.csv is the standard answer, which is not released.
