@@ -32,11 +32,11 @@ itemcf_num = 5
 ''' 候选正样本个数 '''
 candidate_positive_num = 1
 
-''' 负样本数量 '''
-negative_num = 15
-
 ''' 召回数量 '''
 recall_num = 50
+
+''' 负样本数量 '''
+negative_num = 15
 
 ''' 官方embedding原始向量维度 '''
 org_embedding_dim = 128

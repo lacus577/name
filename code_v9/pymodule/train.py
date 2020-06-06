@@ -69,28 +69,29 @@ if __name__ == '__main__':
     total_feature_df = pd.DataFrame()
     for end_time in range(min_time + step, max_time, step):
         print('period {} ...'.format(end_time))
-        period_click_df = all_phase_click_no_qtime[
-            (all_phase_click_no_qtime[conf.new_time_name] <= end_time) &
-            (all_phase_click_no_qtime[conf.new_time_name] >= min_time)
-        ]
+        if conf.is_samples_cached and conf.is_feature_cached and os.path.exists(conf.sim_list_path.format(end_time)):
+            period_click_df = all_phase_click_no_qtime[
+                (all_phase_click_no_qtime[conf.new_time_name] <= end_time) &
+                (all_phase_click_no_qtime[conf.new_time_name] >= min_time)
+            ]
 
-        # 对每个user取最后一个点击作为候选正样本，召回命中才是正式正样本
-        period_click_df = period_click_df.sort_values(['user_id', conf.new_time_name]).reset_index(drop=True)
+            # 对每个user取最后一个点击作为候选正样本，召回命中才是正式正样本
+            period_click_df = period_click_df.sort_values(['user_id', conf.new_time_name]).reset_index(drop=True)
 
-        candidate_positive_sample_df = period_click_df.groupby('user_id').tail(1).reset_index(drop=True)
-        assert candidate_positive_sample_df.shape[0] == len(set(candidate_positive_sample_df['user_id']))
-            # 正样本删除，后面要用于构建相似度矩阵
-        period_click_df = period_click_df.append(candidate_positive_sample_df)
-        period_click_df = \
-            period_click_df.drop_duplicates(['user_id', 'item_id', conf.new_time_name], keep=False)
-        period_click_df = period_click_df.sort_values(['user_id', conf.new_time_name]).reset_index(drop=True)
-        assert period_click_df.merge(
-            candidate_positive_sample_df, on=['user_id', 'item_id', conf.new_time_name], how='inner'
-        ).shape[0] == 0
+            candidate_positive_sample_df = period_click_df.groupby('user_id').tail(1).reset_index(drop=True)
+            assert candidate_positive_sample_df.shape[0] == len(set(candidate_positive_sample_df['user_id']))
+                # 正样本删除，后面要用于构建相似度矩阵
+            period_click_df = period_click_df.append(candidate_positive_sample_df)
+            period_click_df = \
+                period_click_df.drop_duplicates(['user_id', 'item_id', conf.new_time_name], keep=False)
+            period_click_df = period_click_df.sort_values(['user_id', conf.new_time_name]).reset_index(drop=True)
+            assert period_click_df.merge(
+                candidate_positive_sample_df, on=['user_id', 'item_id', conf.new_time_name], how='inner'
+            ).shape[0] == 0
 
-        hot_df = period_click_df.groupby('item_id')['user_id'].count().reset_index()
-        hot_df.columns = ['item_id', 'item_deg']
-        hot_df = hot_df.sort_values('item_deg', ascending=False).reset_index(drop=True)
+            hot_df = period_click_df.groupby('item_id')['user_id'].count().reset_index()
+            hot_df.columns = ['item_id', 'item_deg']
+            hot_df = hot_df.sort_values('item_deg', ascending=False).reset_index(drop=True)
 
         # 相似度矩阵构建
         if os.path.exists(conf.sim_list_path.format(end_time)):
@@ -155,7 +156,7 @@ if __name__ == '__main__':
                 feature_caching_path=conf.features_cache_path.format(end_time),
                 itemcf_score_maxtrix=item_sim_list
             )
-            
+
         assert sample_df.shape[0] == feature_df.shape[0]
         assert len(set(sample_df['user_id'])) == len(set(feature_df['user_id']))
         assert sample_df[sample_df['label'] == 1].shape[0] == len(set(sample_df['user_id']))
@@ -163,7 +164,6 @@ if __name__ == '__main__':
 
         total_feature_df = total_feature_df.append(feature_df)
 
-    assert total_feature_df[total_feature_df['label'] == 1].shape[0] == len(set(total_feature_df['user_id']))
     print('feature shape:{}, positive feature num:{}'.format(total_feature_df.shape, total_feature_df[total_feature_df['label'] == 1].shape[0]))
     # 这里的hot_df与训练集不是同步的，暂时凑合着用
     hot_df = all_phase_click_no_qtime.groupby('item_id')['user_id'].count().reset_index()
