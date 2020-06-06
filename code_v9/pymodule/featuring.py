@@ -368,9 +368,19 @@ def train_test_split(total_features, percentage=0.7):
     # )
 
     # 验证集中每个user只保留一个label为1的正样本
-    positive_valid_data = tmp_valid_data[tmp_valid_data['label'] == 1].drop_duplicates(['user_id'], keep='last')
-    positive_valid_data = positive_valid_data[['user_id', 'truth_item_id']]
-    valid_data = tmp_valid_data.merge(positive_valid_data, on=['user_id', 'truth_item_id'], how='inner')
+    tmp = tmp_valid_data.groupby(['user_id', 'truth_item_id'])['item_id'].count() / conf.recall_num
+    tmp = tmp.reset_index()
+    tmp = tmp[tmp['item_id'] == 1][['user_id', 'truth_item_id']]
+    tmp = tmp.merge(tmp_valid_data, on=['user_id', 'truth_item_id'], how='left')
+    positive_valid_data = tmp[tmp['label'] == 1].drop_duplicates(['user_id'], keep='last')
+    positive_valid_data_dict = utils.two_columns_df2dict(positive_valid_data[['user_id', 'truth_item_id']])
+    tmp['mark'] = tmp.apply(
+        lambda x: positive_valid_data_dict[x['user_id']] == x['truth_item_id'],
+        axis=1
+    )
+    # positive_valid_data = positive_valid_data[['user_id', 'truth_item_id']]
+    valid_data = tmp[tmp['mark'] == True].reset_index(drop=True)
+    valid_data = valid_data[valid_data.columns.difference(['mark'])]
     # negative_valid_data = tmp_valid_data[tmp_valid_data['label'] == 0]
     # negative_valid_data = negative_valid_data.sample(frac=1, random_state=1).groupby('user_id').head(conf.recall_num)
     # valid_data = positive_valid_data.append(negative_valid_data)
