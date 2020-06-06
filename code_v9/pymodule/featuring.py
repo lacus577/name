@@ -367,9 +367,10 @@ def train_test_split(total_features, percentage=0.7):
     #     tmp_valid_data[tmp_valid_data['label'] != 1].sample(n_samples=negative_len, random_state=1)
     # )
 
-    # 验证集中每个user只保留一个label为1的正样本, 其他放到训练集中
-    valid_data = tmp_valid_data.groupby(['user_id', 'truth_item_id']).head(conf.recall_num).reset_index()
-    # positive_valid_data = tmp_valid_data[tmp_valid_data['label'] == 1].drop_duplicates(['user_id'], keep='last')
+    # 验证集中每个user只保留一个label为1的正样本
+    positive_valid_data = tmp_valid_data[tmp_valid_data['label'] == 1].drop_duplicates(['user_id'], keep='last')
+    positive_valid_data = positive_valid_data[['user_id', 'truth_item_id']]
+    valid_data = tmp_valid_data.merge(positive_valid_data, on=['user_id', 'truth_item_id'], how='inner')
     # negative_valid_data = tmp_valid_data[tmp_valid_data['label'] == 0]
     # negative_valid_data = negative_valid_data.sample(frac=1, random_state=1).groupby('user_id').head(conf.recall_num)
     # valid_data = positive_valid_data.append(negative_valid_data)
