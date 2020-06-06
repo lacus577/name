@@ -255,6 +255,10 @@ def read_user_info():
 
     return user_info_df
 
+def clean_user_info(df):
+    df.loc[:, 'user_gender'] = df['user_gender'].replace({'F': 1, 'M': 2})
+    return df
+
 def read_all_phase_click():
     if conf.is_click_cached:
         all_phase_click_666 = pd.read_csv(conf.click_cache_path, dtype={'user_id': np.str, 'item_id': np.str})

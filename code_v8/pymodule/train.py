@@ -58,6 +58,7 @@ if __name__ == '__main__':
     # 数据组织
     item_info_df = utils.read_item_user_info()
     user_info_df = utils.read_user_info()
+    user_info_df = utils.clean_user_info(user_info_df)
 
     all_phase_click = utils.read_all_phase_click()
     all_phase_click_no_qtime = all_phase_click[all_phase_click['train_or_test'] != 'predict']
