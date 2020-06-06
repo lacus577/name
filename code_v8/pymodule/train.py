@@ -57,6 +57,7 @@ def read_features(phase, is_open_train_recall):
 if __name__ == '__main__':
     # 数据组织
     item_info_df = utils.read_item_user_info()
+    user_info_df = utils.read_user_info()
 
     all_phase_click = utils.read_all_phase_click()
     all_phase_click_no_qtime = all_phase_click[all_phase_click['train_or_test'] != 'predict']
@@ -139,6 +140,9 @@ if __name__ == '__main__':
     assert sample_df.shape[0] == feature_df.shape[0]
     assert len(set(sample_df['user_id'])) == len(set(feature_df['user_id']))
 
+    # 加入user属性
+    feature_df = feature_df.merge(user_info_df, on='user_id', how='left')
+
     train_auc = valid_auc = 0
     pre_score_arr = np.zeros(5).reshape(-1, )
     rank_score_arr = np.zeros(5).reshape(-1, )
@@ -167,7 +171,9 @@ if __name__ == '__main__':
         # submit = train_model_rf(train_test, recall_rate=1, hot_list=hot_list, valid=0.2, topk=50)
         # model = rank_rf(train_x, train_y)
         model = rank_xgb(train_x, train_y)
-        print('train set: auc:{}'.format(roc_auc_score(train_y, model.predict_proba(train_x)[:, 1])))
+        one_train_auc = roc_auc_score(train_y, model.predict_proba(train_x)[:, 1])
+        train_auc += one_train_auc
+        print('train set: auc:{}'.format(one_train_auc))
         with open('./cache/rf.pickle', 'wb') as f:
             pickle.dump(model, f)
 

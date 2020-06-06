@@ -241,6 +241,20 @@ def read_item_user_info():
 
     return item_info_df
 
+def read_user_info():
+    ''' 读取item和user属性 '''
+    train_underexpose_user_feat_path = os.path.join(conf.train_path, 'underexpose_user_feat.csv')
+    train_underexpose_user_feat_df_columns = \
+        ['user_id', 'user_age_level', 'user_gender', 'user_city_level']
+
+    user_info_df = pd.read_csv(
+        train_underexpose_user_feat_path,
+        names=train_underexpose_user_feat_df_columns,
+        dtype={'user_id': np.str, 'item_id': np.str, 'time': np.float}
+    )
+
+    return user_info_df
+
 def read_all_phase_click():
     if conf.is_click_cached:
         all_phase_click_666 = pd.read_csv(conf.click_cache_path, dtype={'user_id': np.str, 'item_id': np.str})
