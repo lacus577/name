@@ -191,11 +191,11 @@ if __name__ == '__main__':
             )
         )
 
-        train_x = train_df[train_df.columns.difference(['user_id', 'item_id', 'label'])].values
+        train_x = train_df[train_df.columns.difference(['user_id', 'item_id', 'label', 'truth_item_id'])].values
         train_y = train_df['label'].values
 
         valid_df = valid_df.sort_values('sim').reset_index(drop=True)
-        valid_x = valid_df[valid_df.columns.difference(['user_id', 'item_id', 'label'])].values
+        valid_x = valid_df[valid_df.columns.difference(['user_id', 'item_id', 'label', 'truth_item_id'])].values
         valid_y = valid_df['label'].values
 
         ''' 模型训练 '''
