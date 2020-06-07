@@ -206,10 +206,12 @@ def cal_user_feature(df, all_phase_click_in, item_info_df):
 
     # 过滤出比正样本时间早的点击
     user2time_dict = utils.two_columns_df2dict(df[['user_id', conf.new_time_name]])
-    user_click_df = all_phase_click_in[all_phase_click_in['user_id'].isin(df['user_id'])]
-    user_click_df = user_click_df[user_click_df.groupby('user_id').apply(
-        lambda x: x[conf.new_time_name] < user2time_dict[x['user_id']]
-    )]
+    user_click_df = all_phase_click_in[all_phase_click_in['user_id'].isin(df['user_id'])].reset_index(drop=True)
+    user_click_df = user_click_df[
+        user_click_df.groupby('user_id').apply(
+            lambda x: x[conf.new_time_name] < user2time_dict[x['user_id'].iloc[0]]
+        ).reset_index(drop=True)
+    ].reset_index(drop=True)
 
     item2txtvec_dict = utils.transfer_item_features_df2dict(item_info_df, conf.new_embedding_dim)
     # 构造1,2,3,7,all 天的用户画像
@@ -217,8 +219,8 @@ def cal_user_feature(df, all_phase_click_in, item_info_df):
     for i in [1, 2, 3, 7]:
         days_click_df = user_click_df[
             user_click_df.groupby('user_id').apply(
-                lambda x: x[conf.new_time_name] >= user2time_dict[x['user_id']] -  i * step
-            )
+                lambda x: x[conf.new_time_name] >= user2time_dict[x['user_id'].iloc[0]] -  i * step
+            ).reset_index(drop=True)
         ]
 
         txt_vec, img_vec = _get_user_feature_doing(days_click_df, item2txtvec_dict)
@@ -263,7 +265,7 @@ def get_user_features(sample_df, process_num, all_phase_click_in, item_info_df):
     pool.join()
     user_feature_dict = {}
     for res in process_result:
-        for k, v in res.get():
+        for k, v in res.get().items():
             if not user_feature_dict.get(k):
                 user_feature_dict[k] = v
             else:
@@ -309,6 +311,22 @@ def cal_user_item_sim(df, user_features_dict, item_info_df):
             ),
             axis=1
         )
+
+    df['all_day_user_txt_sim'] = df.apply(
+        lambda x: my_cos_sim(
+            user_features_dict['all_day_user_txt_vec'.format(i)].get(x['user_id']),
+            item2vec_dict['txt_vec'].get(x['item_id'])
+        ),
+        axis=1
+    )
+
+    df['all_day_user_img_sim'] = df.apply(
+        lambda x: my_cos_sim(
+            user_features_dict['all_day_user_img_vec'.format(i)].get(x['user_id']),
+            item2vec_dict['img_vec'].get(x['item_id'])
+        ),
+        axis=1
+    )
 
     return df
 
