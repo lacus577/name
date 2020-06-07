@@ -177,7 +177,7 @@ if __name__ == '__main__':
         one_train_auc = roc_auc_score(train_y, model.predict_proba(train_x)[:, 1])
         train_auc += one_train_auc
         print('train set: auc:{}'.format(one_train_auc))
-        with open('./cache/rf.pickle', 'wb') as f:
+        with open('./cache/model.pickle', 'wb') as f:
             pickle.dump(model, f)
 
         ''' 模型验证 '''

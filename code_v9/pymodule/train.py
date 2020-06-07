@@ -67,7 +67,8 @@ if __name__ == '__main__':
     step = (max_time - min_time) // conf.days
 
     total_feature_df = pd.DataFrame()
-    for end_time in range(min_time + step, max_time, step):
+    # 从第七天开始
+    for end_time in range(min_time + 7 * step, max_time, step):
         print('period {} ...'.format(end_time))
         period_click_df = all_phase_click_no_qtime[
             (all_phase_click_no_qtime[conf.new_time_name] <= end_time) &
@@ -76,7 +77,6 @@ if __name__ == '__main__':
 
         # 对每个user取最后一个点击作为候选正样本，召回命中才是正式正样本
         period_click_df = period_click_df.sort_values(['user_id', conf.new_time_name]).reset_index(drop=True)
-
         candidate_positive_sample_df = period_click_df.groupby('user_id').tail(1).reset_index(drop=True)
         assert candidate_positive_sample_df.shape[0] == len(set(candidate_positive_sample_df['user_id']))
             # 正样本删除，后面要用于构建相似度矩阵
@@ -126,6 +126,7 @@ if __name__ == '__main__':
                 assert len(set(candidate_recall_df['user_id'])) == len(set(candidate_positive_sample_df['user_id']))
                 # 取top50，待top50调试OK之后再放开
             candidate_recall_df = candidate_recall_df.sort_values('sim').reset_index(drop=True)
+            candidate_recall_df = candidate_recall_df.sort_values(['user_id', 'time'], ascending=False).reset_index(drop=True)
             candidate_recall_df = candidate_recall_df.groupby('user_id').head(conf.recall_num).reset_index(drop=True)
 
             # 正样本确认， 负样本构建
@@ -241,7 +242,17 @@ if __name__ == '__main__':
                 one_phase_recall_item_df = utils.subsampling_user(one_phase_recall_item_df, conf.subsampling)
             print('load recall items: phase:{} shape:{}'.format(phase, one_phase_recall_item_df.shape[0]))
         else:
-            raise Exception('qtime召回结果文件不存在')
+            if os.path.exists(conf.total_sim_list_path):
+                item_sim_list = pickle.load(open(conf.total_sim_list_path, 'rb'))
+            else:
+                raise Exception('no total item_sim_list')
+            qitme_df = utils.read_qtime(conf.test_path, phase)
+            # raise Exception('qtime召回结果文件不存在')
+            _, recom_item = recall.items_recommod_5164(
+                qitme_df, item_sim_list, all_phase_click_no_qtime, list(hot_df['item_id'])
+            )
+            one_phase_recall_item_df = pd.DataFrame(recom_item, columns=['user_id', 'item_id', 'sim'])
+            one_phase_recall_item_df.to_csv(conf.recall_cache_path.format(phase), index=False)
 
         if conf.is_recall_sample_cached:
             recall_sample_df = pd.read_csv(conf.recall_sample_path.format(phase), dtype={'user_id': np.str, 'item_id': np.str})
