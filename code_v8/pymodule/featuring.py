@@ -1,5 +1,5 @@
 import multiprocessing
-import time
+import time, os
 
 import pickle
 from tqdm import tqdm
@@ -689,12 +689,19 @@ def do_featuring(
     time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     print('官方特征 start time:{}'.format(time_str))
 
-    # 1，2，3，7天，全量点击刻画用户
-    user_features_dict = get_user_features(sample_df, process_num, all_phase_click_in, item_info_df)
+    if is_recall:
+        if os.path.exists(conf.user_features_path):
+            user_features_df = pd.read_csv(conf.user_features_path, dtype={'user_id': np.str})
+            user_features_dict = utils.user_features_df2dict(user_features_df)
+        else:
+            raise Exception('{} not exist.'.format(conf.user_features_path))
+    else:
+        # 1，2，3，7天，全量点击刻画用户
+        user_features_dict = get_user_features(sample_df, process_num, all_phase_click_in, item_info_df)
+        utils.sava_user_features_dict(user_features_dict, conf.user_features_path)
 
     features_df = cal_txt_img_sim(sample_df, process_num, user_features_dict, item_info_df)
     features_df.to_csv(feature_caching_path, index=False)
-    # print(features_df)
 
 
     # '''

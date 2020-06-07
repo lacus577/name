@@ -307,3 +307,16 @@ def get_candidate_positive_samples(df):
     tmp = tmp[tmp['item_id'] > conf.candidate_positive_num + 2]     # 删掉候选正样本后训练集里面至少有两个点击记录用于训练
     df = df[df['user_id'].isin(tmp['user_id'])].sample(frac=1, random_state=1)
     return df.groupby('user_id').head(conf.candidate_positive_num).reset_index(drop=True)
+
+
+def sava_user_features_dict(user_features_dict, save_path):
+    result_df = pd.DataFrame(data=user_features_dict).reset_index()
+    result_df = result_df.rename(columns={'index': 'user_id'})
+    print(result_df)
+    result_df.to_csv(save_path, index=False)
+
+def user_features_df2dict(df):
+    df = df.set_index('user_id', drop=True)
+    df.index.name = ''
+    result_dict = df.to_dict()
+    return result_dict
