@@ -235,11 +235,11 @@ def cal_user_feature(df, all_phase_click_in, item_info_df):
 
 def _get_user_feature_doing(one_day_click_df, item2txtvec_dict):
     one_day_user_txt_vec = one_day_click_df.groupby('user_id').agg(
-        {'item_id': lambda x: ','.join(str(ch) for ch in np.nansum(list(x.apply(lambda y: item2txtvec_dict['txt_vec'].get(y))), axis=0))}
+        {'item_id': lambda x: ','.join(str(ch) for ch in np.nansum(list(x.apply(lambda y: item2txtvec_dict['txt_vec'].get(y) if item2txtvec_dict['txt_vec'].get(y) is not None else np.zeros(conf.new_embedding_dim))), axis=0))}
     ).reset_index()
 
     one_day_user_img_vec = one_day_click_df.groupby('user_id').agg(
-        {'item_id': lambda x: ','.join(str(ch) for ch in np.nansum(list(x.apply(lambda y: item2txtvec_dict['img_vec'].get(y))), axis=0))}
+        {'item_id': lambda x: ','.join(str(ch) for ch in np.nansum(list(x.apply(lambda y: item2txtvec_dict['img_vec'].get(y) if item2txtvec_dict['img_vec'].get(y) is not None else np.zeros(conf.new_embedding_dim))), axis=0))}
     ).reset_index()
 
     return one_day_user_txt_vec, one_day_user_img_vec
