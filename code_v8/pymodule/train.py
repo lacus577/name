@@ -97,9 +97,6 @@ if __name__ == '__main__':
             candidate_recall_df = pd.read_csv(conf.total_user_recall_path, dtype={'user_id': np.str, 'item_id': np.str})
         else:
             # 候选正样本召回
-            # tmp_df = candidate_positive_sample_df.copy(deep=True)
-            # tmp_df.loc[:, 'user_id'] = tmp_df['user_id'].astype(np.int)
-            # tmp_df.loc[:, 'item_id'] = tmp_df['item_id'].astype(np.int)
             _, recom_item = recall.items_recommod_5164(
                 candidate_positive_sample_df, item_sim_list, all_phase_click_no_qtime, list(hot_df['item_id'])
             )
@@ -210,33 +207,21 @@ if __name__ == '__main__':
                 one_phase_recall_item_df = utils.subsampling_user(one_phase_recall_item_df, conf.subsampling)
             print('load recall items: phase:{} shape:{}'.format(phase, one_phase_recall_item_df.shape[0]))
         else:
-            raise Exception('qtime召回结果文件不存在')
+            qitme_df = utils.read_qtime(conf.test_path, phase)
+            # raise Exception('qtime召回结果文件不存在')
+            _, recom_item = recall.items_recommod_5164(
+                qitme_df, item_sim_list, all_phase_click_no_qtime, list(hot_df['item_id'])
+            )
+            one_phase_recall_item_df = pd.DataFrame(recom_item, columns=['user_id', 'item_id', 'sim'])
+            one_phase_recall_item_df.to_csv(conf.recall_cache_path.format(phase), index=False)
+
+            if conf.subsampling:
+                one_phase_recall_item_df = utils.subsampling_user(one_phase_recall_item_df, conf.subsampling)
 
         if conf.is_recall_sample_cached:
             recall_sample_df = pd.read_csv(conf.recall_sample_path.format(phase), dtype={'user_id': np.str, 'item_id': np.str})
             if conf.subsampling:
                 recall_sample_df = recall_sample_df[recall_sample_df['user_id'].isin(one_phase_recall_item_df['user_id'])]
-
-            # recall_sample_df.loc[:, 'user_txt_vec'] = recall_sample_df.apply(
-            #     lambda x: np.array([np.float(i) for i in x['user_txt_vec'].split('[')[1].split(']')[0].split()])
-            #     if x['user_txt_vec'] is not np.nan and x['user_txt_vec'] else x['user_txt_vec'],
-            #     axis=1
-            # )
-            # recall_sample_df.loc[:, 'user_img_vec'] = recall_sample_df.apply(
-            #     lambda x: np.array([np.float(i) for i in x['user_img_vec'].split('[')[1].split(']')[0].split()])
-            #     if x['user_img_vec'] is not np.nan and x['user_img_vec'] else x['user_img_vec'],
-            #     axis=1
-            # )
-            recall_sample_df.loc[:, 'item_txt_vec'] = recall_sample_df.apply(
-                lambda x: np.array([np.float(i) for i in x['item_txt_vec'].split('[')[1].split(']')[0].split()])
-                if x['item_txt_vec'] is not np.nan and x['item_txt_vec'] else x['item_txt_vec'],
-                axis=1
-            )
-            recall_sample_df.loc[:, 'item_img_vec'] = recall_sample_df.apply(
-                lambda x: np.array([np.float(i) for i in x['item_img_vec'].split('[')[1].split(']')[0].split()])
-                if x['item_img_vec'] is not np.nan and x['item_img_vec'] else x['item_img_vec'],
-                axis=1
-            )
 
             print('load recall samples: phase:{} shape:{}'.format(phase, recall_sample_df.shape[0]))
         else:
@@ -264,6 +249,10 @@ if __name__ == '__main__':
             )
 
         submit_x = recall_feature_df[recall_feature_df.columns.difference(['user_id', 'item_id', 'label'])].values
+
+        # TODO k此留出验证模型输出结果加权作为最终结果
+        with open('./cache/model.pickle', 'rb') as f:
+            model = pickle.load(f)
         submit_pre_y = model.predict_proba(submit_x)[:, 1]
         submit = utils.save_pre_as_submit_format_csv(recall_sample_df, submit_pre_y)
         submit_all = submit_all.append(submit)
