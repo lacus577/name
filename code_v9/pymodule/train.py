@@ -126,7 +126,7 @@ if __name__ == '__main__':
                 assert len(set(candidate_recall_df['user_id'])) == len(set(candidate_positive_sample_df['user_id']))
                 # 取top50，待top50调试OK之后再放开
             candidate_recall_df = candidate_recall_df.sort_values('sim').reset_index(drop=True)
-            candidate_recall_df = candidate_recall_df.sort_values(['user_id', 'time'], ascending=False).reset_index(drop=True)
+            candidate_recall_df = candidate_recall_df.sort_values(['user_id', conf.new_time_name], ascending=False).reset_index(drop=True)
             candidate_recall_df = candidate_recall_df.groupby('user_id').head(conf.recall_num).reset_index(drop=True)
 
             # 正样本确认， 负样本构建
