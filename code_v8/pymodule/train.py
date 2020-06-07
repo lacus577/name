@@ -245,7 +245,7 @@ if __name__ == '__main__':
             recall_feature_df = do_featuring(
                 all_phase_click_no_qtime, recall_sample_df, hot_df, conf.process_num,
                 item_txt_embedding_dim, is_recall=True, feature_caching_path=conf.recall_feature_path.format(phase),
-                itemcf_score_maxtrix=item_sim_list, item_info_df=item_info_df
+                itemcf_score_maxtrix=item_sim_list, item_info_df=item_info_df, phase=phase
             )
 
         submit_x = recall_feature_df[recall_feature_df.columns.difference(['user_id', 'item_id', 'label'])].values

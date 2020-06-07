@@ -244,10 +244,13 @@ def _get_user_feature_doing(one_day_click_df, item2txtvec_dict):
 
     return one_day_user_txt_vec, one_day_user_img_vec
 
-def get_user_features(sample_df, process_num, all_phase_click_in, item_info_df):
+def get_user_features(sample_df, process_num, all_phase_click_in, item_info_df, is_recall=False):
     # 拿到时间最早的第一个正样本
-    tmp = sample_df.sort_values(['user_id', 'time'], ascending=True).reset_index(drop=True)
-    tmp = tmp[tmp['label'] == 1].groupby('user_id').head(1).reset_index(drop=True)
+    if is_recall:
+        tmp = sample_df
+    else:
+        tmp = sample_df.sort_values(['user_id', 'time'], ascending=True).reset_index(drop=True)
+        tmp = tmp[tmp['label'] == 1].groupby('user_id').head(1).reset_index(drop=True)
 
     pool = multiprocessing.Pool(processes=process_num)
     process_result = []
@@ -678,7 +681,8 @@ def do_featuring(
         is_recall,
         feature_caching_path,
         itemcf_score_maxtrix,
-        item_info_df
+        item_info_df,
+        phase=-1
 ):
     """
 
@@ -698,15 +702,17 @@ def do_featuring(
     print('官方特征 start time:{}'.format(time_str))
 
     if is_recall:
-        if os.path.exists(conf.user_features_path):
-            user_features_df = pd.read_csv(conf.user_features_path, dtype={'user_id': np.str})
-            user_features_dict = utils.user_features_df2dict(user_features_df)
-        else:
-            raise Exception('{} not exist.'.format(conf.user_features_path))
+        # if os.path.exists(conf.user_features_path):
+        #     user_features_df = pd.read_csv(conf.user_features_path, dtype={'user_id': np.str})
+        #     user_features_dict = utils.user_features_df2dict(user_features_df)
+        # else:
+        #     raise Exception('{} not exist.'.format(conf.user_features_path))
+        phase_qtime_df = utils.read_qtime(conf.test_path, phase)
+        user_features_dict = get_user_features(phase_qtime_df, process_num, all_phase_click_in, item_info_df, is_recall)
     else:
         # 1，2，3，7天，全量点击刻画用户
         user_features_dict = get_user_features(sample_df, process_num, all_phase_click_in, item_info_df)
-        utils.sava_user_features_dict(user_features_dict, conf.user_features_path)
+        # utils.sava_user_features_dict(user_features_dict, conf.user_features_path)
 
     features_df = cal_txt_img_sim(sample_df, process_num, user_features_dict, item_info_df)
     features_df.to_csv(feature_caching_path, index=False)
