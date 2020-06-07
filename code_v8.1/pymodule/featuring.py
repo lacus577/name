@@ -301,7 +301,7 @@ def cal_user_item_sim(df, user_features_dict, item_info_df):
         df['{}_day_user_txt_sim'.format(i)] = df.apply(
             lambda x: my_cos_sim(
                 np.array([float(num) for num in user_features_dict['{}_day_user_txt_vec'.format(i)].get(x['user_id']).split(',')])
-                if user_features_dict['{}_day_user_txt_vec'.format(i)].get(x['user_id']) is not None
+                if user_features_dict['{}_day_user_txt_vec'.format(i)].get(x['user_id']) is not None and not isinstance(user_features_dict['{}_day_user_txt_vec'.format(i)].get(x['user_id']), np.float)
                 else None,
                 item2vec_dict['txt_vec'].get(x['item_id'])
             ),
@@ -311,7 +311,7 @@ def cal_user_item_sim(df, user_features_dict, item_info_df):
         df['{}_day_user_img_sim'.format(i)] = df.apply(
             lambda x: my_cos_sim(
                 np.array([float(num) for num in user_features_dict['{}_day_user_img_vec'.format(i)].get(x['user_id']).split(',')])
-                if user_features_dict['{}_day_user_img_vec'.format(i)].get(x['user_id']) is not None
+                if user_features_dict['{}_day_user_img_vec'.format(i)].get(x['user_id']) is not None and not isinstance(user_features_dict['{}_day_user_img_vec'.format(i)].get(x['user_id']), np.float)
                 else None,
                 item2vec_dict['img_vec'].get(x['item_id'])
             ),
@@ -321,7 +321,7 @@ def cal_user_item_sim(df, user_features_dict, item_info_df):
     df['all_day_user_txt_sim'] = df.apply(
         lambda x: my_cos_sim(
             np.array([float(num) for num in user_features_dict['all_day_user_txt_vec'.format(i)].get(x['user_id']).split(',')])
-            if user_features_dict['all_day_user_txt_vec'.format(i)].get(x['user_id']) is not None
+            if user_features_dict['all_day_user_txt_vec'].get(x['user_id']) is not None and not isinstance(user_features_dict['all_day_user_txt_vec'].get(x['user_id']), np.float)
             else None,
             item2vec_dict['txt_vec'].get(x['item_id'])
         ),
@@ -331,7 +331,7 @@ def cal_user_item_sim(df, user_features_dict, item_info_df):
     df['all_day_user_img_sim'] = df.apply(
         lambda x: my_cos_sim(
             np.array([float(num) for num in user_features_dict['all_day_user_img_vec'.format(i)].get(x['user_id']).split(',')])
-            if user_features_dict['all_day_user_img_vec'.format(i)].get(x['user_id']) is not None
+            if user_features_dict['all_day_user_img_vec'].get(x['user_id']) is not None and not isinstance(user_features_dict['all_day_user_img_vec'].get(x['user_id']), np.float)
             else None,
             item2vec_dict['img_vec'].get(x['item_id'])
         ),
