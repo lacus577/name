@@ -162,7 +162,7 @@ if __name__ == '__main__':
                 period_click_df, sample_df, hot_df, conf.process_num,
                 item_txt_embedding_dim, is_recall=False,
                 feature_caching_path=conf.features_cache_path.format(end_time),
-                itemcf_score_maxtrix=item_sim_list
+                itemcf_score_maxtrix=item_sim_list, item_info_df=item_info_df
             )
 
         assert sample_df.shape[0] == feature_df.shape[0]
@@ -282,7 +282,7 @@ if __name__ == '__main__':
             recall_feature_df = do_featuring(
                 all_phase_click_no_qtime, recall_sample_df, hot_df, conf.process_num,
                 item_txt_embedding_dim, is_recall=True, feature_caching_path=conf.recall_feature_path.format(phase),
-                itemcf_score_maxtrix=item_sim_list
+                itemcf_score_maxtrix=item_sim_list, item_info_df=item_info_df, phase=phase
             )
 
         submit_x = recall_feature_df[recall_feature_df.columns.difference(['user_id', 'item_id', 'label'])].values
