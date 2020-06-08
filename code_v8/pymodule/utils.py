@@ -175,12 +175,10 @@ def get_user2click_span_dict(df):
 
     return result_dict
 
-def get_user2total_deg_dict(df):
-    column = list(df.columns)
-    assert len(column) == 2
-    tmp = df.groupby('user_id').agg({column[1]: lambda x: np.sum(list(x))}).reset_index()
+def get_user2total_deg_dict(df, day):
+    tmp = df.groupby('user_id').agg({'{}day_item_deg'.format(day): lambda x: np.sum(list(x))}).reset_index()
 
-    result_dict = dict(zip(tmp['user_id'], tmp[column[1]]))
+    result_dict = dict(zip(tmp['user_id'], tmp['{}day_item_deg'.format(day)]))
 
     return result_dict
 

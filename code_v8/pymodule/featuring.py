@@ -842,7 +842,7 @@ def statistic_features(features_df, all_phase_click_in, feature_caching_path, ho
 
     # new
     print('用户点击所有item的总热度 特征 doing')
-    user2total_deg_dict = utils.get_user2total_deg_dict(all_phase_click_in)
+    user2total_deg_dict = utils.get_user2total_deg_dict(all_phase_click_in, day)
     features_df['{}day_user_total_deg'.format(day)] = features_df.apply(
         lambda x: user2total_deg_dict.get(x['user_id']),
         axis=1
