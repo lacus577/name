@@ -934,7 +934,7 @@ def click_interval_features(features_df, all_phase_click_in, feature_caching_pat
     user2click_span_dict = utils.get_user2click_span_dict(all_phase_click_in)
     features_df['{}day_user_span_click'.format(day)] = features_df.apply(
         lambda x: x['{}day_user_click_num'.format(day)] / user2click_span_dict.get(x['user_id'])
-        if user2click_span_dict.get(x['user_id']) is not None else None,
+        if user2click_span_dict.get(x['user_id']) is not None and user2click_span_dict.get(x['user_id']) != 0 else None,
         axis=1
     )
     features_df.to_csv(feature_caching_path, index=False)
