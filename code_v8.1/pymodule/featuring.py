@@ -580,65 +580,10 @@ def process_after_featuring(df, is_recall=False):
     ''' 缺失值处理 当前填0 '''
     # df.fillna(value=0, axis=0, inplace=True)
 
-    ''' 特征列顺序 重新 组织 '''
-    # ['user_id', 'item_id', 'label', 'itemcf_score', 'txt_embedding_sim', 'img_embedding_sim', 'click_item_user_sim', 'click_user_item_sim', 'item_distance',
-    #    'user_click_num', 'user_click_interval_mean', 'user_click_interval_min',
-    #    'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
-    #    'user_item_min_deg', 'user_item_max_deg']
-    # features_columns = ['user_id', 'item_id', 'txt_embedding_sim', 'img_embedding_sim',
-    #    'click_item_user_sim', 'click_user_item_sim', 'user_click_num',
-    #    'user_click_interval_mean', 'user_click_interval_min',
-    #    'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
-    #    'user_item_min_deg', 'user_item_max_deg',
-    #    '0_item2item_itemcf_score', 'item20_item_itemcf_score',
-    #    '1_item2item_itemcf_score', 'item21_item_itemcf_score',
-    #    '2_item2item_itemcf_score', 'item22_item_itemcf_score',
-    #    '3_item2item_itemcf_score', 'item23_item_itemcf_score',
-    #    '4_item2item_itemcf_score', 'item24_item_itemcf_score',
-    #    'user_avg_click', 'user_span_click', 'user_total_deg', 'user_avg_deg',
-    #    '0_item_deg', '1_item_deg', 'top_1_item_deg', '2_item_deg',
-    #    'top_2_item_deg', '3_item_deg', 'top_3_item_deg', '4_item_deg',
-    #    'top_4_item_deg']
-    # features_columns = ['user_id', 'item_id', conf.ITEM_CF_SCORE,
-    #                     'click_item_user_sim', 'click_user_item_sim', 'user_click_num',
-    #                     'user_click_interval_mean', 'user_click_interval_min',
-    #                     'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
-    #                     'user_item_min_deg', 'user_item_max_deg',
-    #                     '0_item2item_itemcf_score', 'item20_item_itemcf_score',
-    #                     '1_item2item_itemcf_score', 'item21_item_itemcf_score',
-    #                     '2_item2item_itemcf_score', 'item22_item_itemcf_score',
-    #                     '3_item2item_itemcf_score', 'item23_item_itemcf_score',
-    #                     '4_item2item_itemcf_score', 'item24_item_itemcf_score',
-    #                     'user_avg_click', 'user_span_click', 'user_total_deg', 'user_avg_deg',
-    #                     '0_item_deg', '1_item_deg', 'top_1_item_deg', '2_item_deg',
-    #                     'top_2_item_deg', '3_item_deg', 'top_3_item_deg', '4_item_deg',
-    #                     'top_4_item_deg']
-    # features_columns = ['user_id', 'item_id', conf.ITEM_CF_SCORE, '1_day_user_txt_sim', '1_day_user_img_sim',
-    #                     '2_day_user_txt_sim', '2_day_user_img_sim', '3_day_user_txt_sim',
-    #                     '3_day_user_img_sim', '7_day_user_txt_sim', '7_day_user_img_sim',
-    #                     'all_day_user_txt_sim', 'all_day_user_img_sim']
-    features_columns = ['user_id', 'item_id', conf.ITEM_CF_SCORE,
-                        'click_item_user_sim', 'click_user_item_sim', 'user_click_num',
-                        'user_click_interval_mean', 'user_click_interval_min',
-                        'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
-                        'user_item_min_deg', 'user_item_max_deg',
-                        '0_item2item_itemcf_score', 'item20_item_itemcf_score',
-                        '1_item2item_itemcf_score', 'item21_item_itemcf_score',
-                        '2_item2item_itemcf_score', 'item22_item_itemcf_score',
-                        '3_item2item_itemcf_score', 'item23_item_itemcf_score',
-                        '4_item2item_itemcf_score', 'item24_item_itemcf_score',
-                        'user_avg_click', 'user_span_click', 'user_total_deg', 'user_avg_deg',
-                        '0_item_deg', '1_item_deg', 'top_1_item_deg', '2_item_deg',
-                        'top_2_item_deg', '3_item_deg', 'top_3_item_deg', '4_item_deg',
-                        'top_4_item_deg', '1_day_user_txt_sim', '1_day_user_img_sim',
-                        '2_day_user_txt_sim', '2_day_user_img_sim', '3_day_user_txt_sim',
-                        '3_day_user_img_sim', '7_day_user_txt_sim', '7_day_user_img_sim',
-                        'all_day_user_txt_sim', 'all_day_user_img_sim']
-
     if is_recall:
-        df = df[features_columns]
+        df = utils.get_features(df, is_label=0, type=0)
     else:
-       df = df[features_columns + ['label']]
+        df = utils.get_features(df, is_label=1, type=0)
 
     return df
 

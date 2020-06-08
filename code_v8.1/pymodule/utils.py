@@ -331,3 +331,40 @@ def user_features_df2dict(df):
     df.index.name = ''
     result_dict = df.to_dict()
     return result_dict
+
+def get_features(df, is_label, type):
+    ''' 特征列顺序 重新 组织 '''
+    pre_columns = ['user_id', 'item_id']
+    recall_columns = [conf.ITEM_CF_SCORE]
+    part1_columns = ['click_item_user_sim', 'click_user_item_sim', 'user_click_num',
+                    'user_click_interval_mean', 'user_click_interval_min',
+                    'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
+                    'user_item_min_deg', 'user_item_max_deg',
+                    '0_item2item_itemcf_score', 'item20_item_itemcf_score',
+                    '1_item2item_itemcf_score', 'item21_item_itemcf_score',
+                    '2_item2item_itemcf_score', 'item22_item_itemcf_score',
+                    '3_item2item_itemcf_score', 'item23_item_itemcf_score',
+                    '4_item2item_itemcf_score', 'item24_item_itemcf_score',
+                    'user_avg_click', 'user_span_click', 'user_total_deg', 'user_avg_deg',
+                    '0_item_deg', '1_item_deg', 'top_1_item_deg', '2_item_deg',
+                    'top_2_item_deg', '3_item_deg', 'top_3_item_deg', '4_item_deg',
+                    'top_4_item_deg']
+    part2_columns = ['1_day_user_txt_sim', '1_day_user_img_sim',
+                    '2_day_user_txt_sim', '2_day_user_img_sim', '3_day_user_txt_sim',
+                    '3_day_user_img_sim', '7_day_user_txt_sim', '7_day_user_img_sim',
+                    'all_day_user_txt_sim', 'all_day_user_img_sim']
+    if type == 0:
+        features_columns = pre_columns + recall_columns + part1_columns + part2_columns
+    elif type == 1:
+        features_columns = pre_columns + recall_columns + part1_columns
+    elif type == 2:
+        features_columns = pre_columns + recall_columns + part2_columns
+    else:
+        raise Exception('columns error.')
+
+    if is_label:
+        df = df[features_columns + ['label']]
+    else:
+        df = df[features_columns]
+
+    return df
