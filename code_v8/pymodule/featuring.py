@@ -216,7 +216,7 @@ def cal_user_feature(df, all_phase_click_in, item_info_df):
     item2txtvec_dict = utils.transfer_item_features_df2dict(item_info_df, conf.new_embedding_dim)
     # 构造1,2,3,7,all 天的用户画像
     user_feature_dict = {}
-    for i in [1, 2, 3, 7]:
+    for i in tqdm(conf.time_periods):
         days_click_df = user_click_df[
             user_click_df.groupby('user_id').apply(
                 lambda x: x['time'] >= user2time_dict[x['user_id'].iloc[0]] -  i * step
@@ -587,48 +587,10 @@ def process_after_featuring(df, is_recall=False):
     ''' 缺失值处理 当前填0 '''
     # df.fillna(value=0, axis=0, inplace=True)
 
-    ''' 特征列顺序 重新 组织 '''
-    # ['user_id', 'item_id', 'label', 'itemcf_score', 'txt_embedding_sim', 'img_embedding_sim', 'click_item_user_sim', 'click_user_item_sim', 'item_distance',
-    #    'user_click_num', 'user_click_interval_mean', 'user_click_interval_min',
-    #    'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
-    #    'user_item_min_deg', 'user_item_max_deg']
-    # features_columns = ['user_id', 'item_id', 'txt_embedding_sim', 'img_embedding_sim',
-    #    'click_item_user_sim', 'click_user_item_sim', 'user_click_num',
-    #    'user_click_interval_mean', 'user_click_interval_min',
-    #    'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
-    #    'user_item_min_deg', 'user_item_max_deg',
-    #    '0_item2item_itemcf_score', 'item20_item_itemcf_score',
-    #    '1_item2item_itemcf_score', 'item21_item_itemcf_score',
-    #    '2_item2item_itemcf_score', 'item22_item_itemcf_score',
-    #    '3_item2item_itemcf_score', 'item23_item_itemcf_score',
-    #    '4_item2item_itemcf_score', 'item24_item_itemcf_score',
-    #    'user_avg_click', 'user_span_click', 'user_total_deg', 'user_avg_deg',
-    #    '0_item_deg', '1_item_deg', 'top_1_item_deg', '2_item_deg',
-    #    'top_2_item_deg', '3_item_deg', 'top_3_item_deg', '4_item_deg',
-    #    'top_4_item_deg']
-    # features_columns = ['user_id', 'item_id', conf.ITEM_CF_SCORE,
-    #                     'click_item_user_sim', 'click_user_item_sim', 'user_click_num',
-    #                     'user_click_interval_mean', 'user_click_interval_min',
-    #                     'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
-    #                     'user_item_min_deg', 'user_item_max_deg',
-    #                     '0_item2item_itemcf_score', 'item20_item_itemcf_score',
-    #                     '1_item2item_itemcf_score', 'item21_item_itemcf_score',
-    #                     '2_item2item_itemcf_score', 'item22_item_itemcf_score',
-    #                     '3_item2item_itemcf_score', 'item23_item_itemcf_score',
-    #                     '4_item2item_itemcf_score', 'item24_item_itemcf_score',
-    #                     'user_avg_click', 'user_span_click', 'user_total_deg', 'user_avg_deg',
-    #                     '0_item_deg', '1_item_deg', 'top_1_item_deg', '2_item_deg',
-    #                     'top_2_item_deg', '3_item_deg', 'top_3_item_deg', '4_item_deg',
-    #                     'top_4_item_deg']
-    features_columns = ['user_id', 'item_id', conf.ITEM_CF_SCORE, '1_day_user_txt_sim', '1_day_user_img_sim',
-    '2_day_user_txt_sim', '2_day_user_img_sim', '3_day_user_txt_sim',
-    '3_day_user_img_sim', '7_day_user_txt_sim', '7_day_user_img_sim',
-    'all_day_user_txt_sim', 'all_day_user_img_sim']
-
     if is_recall:
-        df = df[features_columns]
+        df = utils.get_features(df, is_label=0, type=0)
     else:
-       df = df[features_columns + ['label']]
+        df = utils.get_features(df, is_label=1, type=0)
 
     return df
 
@@ -735,6 +697,44 @@ def do_featuring(
         features_df, dict_embedding_all_ui_item, dict_embedding_all_ui_user, process_num
     )
     features_df.to_csv(feature_caching_path, index=False)
+
+    # for time_interval in tqdm(conf.time_periods):
+    #     # 获取时间片中的点击
+    #     min_time = int(np.min(all_phase_click_in[conf.new_time_name]))
+    #     max_time = int(np.max(all_phase_click_in[conf.new_time_name])) + 1
+    #     step = (max_time - min_time) // conf.days
+    #
+    #     # 过滤出比正样本时间早的点击
+    #         # 每个user最早的正样本
+    #     user2time_dict = utils.two_columns_df2dict(
+    #         sample_df[sample_df['label'] == 1].sort_values('time', ascending=True).groupby('user_id').head(1)[['user_id', 'time']]
+    #     )
+        # user_click_df = all_phase_click_in[all_phase_click_in['user_id'].isin(sample_df['user_id'])].reset_index(drop=True)
+        # user_click_df = user_click_df[
+        #     user_click_df.groupby('user_id').apply(
+        #         lambda x: x['time'] < user2time_dict[x['user_id'].iloc[0]]
+        #     ).reset_index(drop=True)
+        # ].reset_index(drop=True)
+        #
+        # item2txtvec_dict = utils.transfer_item_features_df2dict(item_info_df, conf.new_embedding_dim)
+        # # 构造1,2,3,7,all 天的用户画像
+        # user_feature_dict = {}
+        # for i in tqdm(conf.time_periods):
+        #     days_click_df = user_click_df[
+        #         user_click_df.groupby('user_id').apply(
+        #             lambda x: x['time'] >= user2time_dict[x['user_id'].iloc[0]] - i * step
+        #         ).reset_index(drop=True)
+        #     ]
+        #
+        #     txt_vec, img_vec = _get_user_feature_doing(days_click_df, item2txtvec_dict)
+        #     user_feature_dict['{}_day_user_txt_vec'.format(i)] = dict(zip(txt_vec['user_id'], txt_vec['item_id']))
+        #     user_feature_dict['{}_day_user_img_vec'.format(i)] = dict(zip(img_vec['user_id'], img_vec['item_id']))
+        #
+        # txt_vec, img_vec = _get_user_feature_doing(user_click_df, item2txtvec_dict)
+        # user_feature_dict['all_day_user_txt_vec'] = dict(zip(txt_vec['user_id'], txt_vec['item_id']))
+        # user_feature_dict['all_day_user_img_vec'] = dict(zip(img_vec['user_id'], img_vec['item_id']))
+
+        # 特征提取
 
     '''
     统计特征:
