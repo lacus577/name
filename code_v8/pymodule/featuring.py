@@ -200,8 +200,8 @@ def get_train_test_data(
 def cal_user_feature(df, all_phase_click_in, item_info_df):
     # 1,2,3,7,all
     # 将数据按天切分成14天，从第七天开始构建样本
-    min_time = int(np.min(all_phase_click_in[conf.new_time_name]))
-    max_time = int(np.max(all_phase_click_in[conf.new_time_name])) + 1
+    min_time = int(np.min(all_phase_click_in['time']))
+    max_time = int(np.max(all_phase_click_in['time'])) + 1
     step = (max_time - min_time) // conf.days
 
     # 过滤出比正样本时间早的点击
@@ -228,6 +228,10 @@ def cal_user_feature(df, all_phase_click_in, item_info_df):
         user_feature_dict['{}_day_user_img_vec'.format(i)] = dict(zip(img_vec['user_id'], img_vec['item_id']))
 
     txt_vec, img_vec = _get_user_feature_doing(user_click_df, item2txtvec_dict)
+    user_feature_dict['earlier_day_user_txt_vec'] = dict(zip(txt_vec['user_id'], txt_vec['item_id']))
+    user_feature_dict['earlier_day_user_img_vec'] = dict(zip(img_vec['user_id'], img_vec['item_id']))
+
+    txt_vec, img_vec = _get_user_feature_doing(all_phase_click_in, item2txtvec_dict)
     user_feature_dict['all_day_user_txt_vec'] = dict(zip(txt_vec['user_id'], txt_vec['item_id']))
     user_feature_dict['all_day_user_img_vec'] = dict(zip(img_vec['user_id'], img_vec['item_id']))
 
@@ -664,17 +668,12 @@ def do_featuring(
     print('官方特征 start time:{}'.format(time_str))
 
     if is_recall:
-        # if os.path.exists(conf.user_features_path):
-        #     user_features_df = pd.read_csv(conf.user_features_path, dtype={'user_id': np.str})
-        #     user_features_dict = utils.user_features_df2dict(user_features_df)
-        # else:
-        #     raise Exception('{} not exist.'.format(conf.user_features_path))
         phase_qtime_df = utils.read_qtime(conf.test_path, phase)
         user_features_dict = get_user_features(phase_qtime_df, process_num, all_phase_click_in, item_info_df, is_recall)
     else:
         # 1，2，3，7天，全量点击刻画用户
         user_features_dict = get_user_features(sample_df, process_num, all_phase_click_in, item_info_df)
-        # utils.sava_user_features_dict(user_features_dict, conf.user_features_path)
+        utils.sava_user_features_dict(user_features_dict, conf.user_features_path)
 
     features_df = cal_txt_img_sim(sample_df, process_num, user_features_dict, item_info_df)
     features_df.to_csv(feature_caching_path, index=False)
@@ -698,44 +697,72 @@ def do_featuring(
     )
     features_df.to_csv(feature_caching_path, index=False)
 
-    # for time_interval in tqdm(conf.time_periods):
-    #     # 获取时间片中的点击
-    #     min_time = int(np.min(all_phase_click_in[conf.new_time_name]))
-    #     max_time = int(np.max(all_phase_click_in[conf.new_time_name])) + 1
-    #     step = (max_time - min_time) // conf.days
-    #
-    #     # 过滤出比正样本时间早的点击
-    #         # 每个user最早的正样本
-    #     user2time_dict = utils.two_columns_df2dict(
-    #         sample_df[sample_df['label'] == 1].sort_values('time', ascending=True).groupby('user_id').head(1)[['user_id', 'time']]
-    #     )
-        # user_click_df = all_phase_click_in[all_phase_click_in['user_id'].isin(sample_df['user_id'])].reset_index(drop=True)
-        # user_click_df = user_click_df[
-        #     user_click_df.groupby('user_id').apply(
-        #         lambda x: x['time'] < user2time_dict[x['user_id'].iloc[0]]
-        #     ).reset_index(drop=True)
-        # ].reset_index(drop=True)
-        #
-        # item2txtvec_dict = utils.transfer_item_features_df2dict(item_info_df, conf.new_embedding_dim)
-        # # 构造1,2,3,7,all 天的用户画像
-        # user_feature_dict = {}
-        # for i in tqdm(conf.time_periods):
-        #     days_click_df = user_click_df[
-        #         user_click_df.groupby('user_id').apply(
-        #             lambda x: x['time'] >= user2time_dict[x['user_id'].iloc[0]] - i * step
-        #         ).reset_index(drop=True)
-        #     ]
-        #
-        #     txt_vec, img_vec = _get_user_feature_doing(days_click_df, item2txtvec_dict)
-        #     user_feature_dict['{}_day_user_txt_vec'.format(i)] = dict(zip(txt_vec['user_id'], txt_vec['item_id']))
-        #     user_feature_dict['{}_day_user_img_vec'.format(i)] = dict(zip(img_vec['user_id'], img_vec['item_id']))
-        #
-        # txt_vec, img_vec = _get_user_feature_doing(user_click_df, item2txtvec_dict)
-        # user_feature_dict['all_day_user_txt_vec'] = dict(zip(txt_vec['user_id'], txt_vec['item_id']))
-        # user_feature_dict['all_day_user_img_vec'] = dict(zip(img_vec['user_id'], img_vec['item_id']))
+    # 获取时间片中的点击
+    min_time = int(np.min(all_phase_click_in['time']))
+    max_time = int(np.max(all_phase_click_in['time'])) + 1
+    step = (max_time - min_time) // conf.days
 
-        # 特征提取
+    # 过滤出比正样本时间早的点击
+        # 每个user最早的正样本
+    user2time_dict = utils.two_columns_df2dict(
+        sample_df[sample_df['label'] == 1].sort_values('time', ascending=True).groupby('user_id').head(1)[['user_id', 'time']]
+    )
+    user_click_df = all_phase_click_in[all_phase_click_in['user_id'].isin(sample_df['user_id'])].reset_index(drop=True)
+    user_click_df = user_click_df[
+        user_click_df.groupby('user_id').apply(lambda x: x['time'] < user2time_dict[x['user_id'].iloc[0]]).reset_index(drop=True)
+    ].reset_index(drop=True)
+    for time_interval in tqdm(conf.time_periods):
+        days_click_df = user_click_df[
+            user_click_df.groupby('user_id').apply(
+                lambda x: x['time'] >= user2time_dict[x['user_id'].iloc[0]] - time_interval * step
+            ).reset_index(drop=True)
+        ]
 
+        # 时间片内特征提取部分
+            # 统计特征
+        days_hot_df = days_click_df.groupby('item_id')['user_id'].count().reset_index()
+        days_hot_df.columns = ['item_id', 'item_deg']
+        days_hot_df = days_hot_df.sort_values('item_deg', ascending=False).reset_index(drop=True)
+        features_df = statistic_features(features_df, days_click_df, feature_caching_path, days_hot_df, time_interval)
+
+            # 点击间隔特征
+        click_interval_features(features_df, days_click_df, feature_caching_path, time_interval)
+
+
+    # 早于正样本时间内特征提取部分
+        # 统计特征
+    days_hot_df = user_click_df.groupby('item_id')['user_id'].count().reset_index()
+    days_hot_df.columns = ['item_id', 'item_deg']
+    days_hot_df = days_hot_df.sort_values('item_deg', ascending=False).reset_index(drop=True)
+    features_df = statistic_features(features_df, user_click_df, feature_caching_path, days_hot_df, 'earlier')
+        # 点击间隔特征
+    click_interval_features(features_df, user_click_df, feature_caching_path, 'earlier')
+
+
+    # 全量时间内特征提取部分
+        # 统计特征
+    features_df = statistic_features(features_df, all_phase_click_in, feature_caching_path, hot_df_in, 'all')
+        # 点击间隔特征
+    features_df = click_interval_features(features_df, user_click_df, feature_caching_path, 'all')
+        # 召回阶段的itemcf score TODO 时间分片
+    itemcf_score_features(features_df, all_phase_click_in, feature_caching_path, 'all', itemcf_score_maxtrix)
+
+    '''
+    新增统计特征
+    用户点击深度/平均时间间隔 -- 间接反应用户活跃度：更活跃的用户应该值较大，因为经常发生点击行为时间间隔更小
+    用户点击深度/时间跨度    -- 应该没有什么用
+    用户点击所有item的总热度 -- 用户对热门item的偏好程度，一定程度上反应上条特征中用户是否活跃
+    用户点击所有item的总热度/用户点击item数量 -- 用户点击平均热度，消除用户点击深度影响
+    用户最近1/2/3个item热度（单独热度、总热度）
+    '''
+
+    features_df = process_after_featuring(features_df, is_recall)
+    features_df.to_csv(feature_caching_path, index=False)
+    print(features_df.iloc[:5, :])
+
+    return features_df
+
+def statistic_features(features_df, all_phase_click_in, feature_caching_path, hot_df_in, day):
     '''
     统计特征:
     一阶特征：
@@ -749,9 +776,8 @@ def do_featuring(
     '''
     time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     print('统计特征 start time:{}'.format(time_str))
-
-    all_phase_click_in = all_phase_click_in.sort_values(['user_id', conf.new_time_name], ascending=False).reset_index(drop=True)
-
+    all_phase_click_in = all_phase_click_in.sort_values(['user_id', 'time'], ascending=False).reset_index(
+        drop=True)
     ''' user点击序中user点击次数（即 点击深度 TODO 去做个统计：点击深度和冷门物品偏好的关系） -- 全量数据集统计 '''
     print('用户点击次数特征 doing')
     user_click_num_df = all_phase_click_in.groupby('user_id')['item_id'].count().reset_index()
@@ -759,12 +785,13 @@ def do_featuring(
     user_click_dict = utils.two_columns_df2dict(user_click_num_df)
 
     # todo qtime的user由于被删除掉未来的点击，所以统计出来的点击次数肯定少
-    features_df['user_click_num'] = features_df.apply(
+    features_df['{}day_user_click_num'.format(day)] = features_df.apply(
         lambda x: user_click_dict[x['user_id']] if user_click_dict.get(x['user_id']) else 0, axis=1)
     features_df.to_csv(feature_caching_path, index=False)
 
     ''' 本item在全局的热度：先使用全量数据集统计，调优的时候分在train、test、item-feature中的热度 '''
     print('item在全局的热度 doing')
+    hot_df_in.columns = ['item_id', '{}day_item_deg'.format(day)]
     features_df = features_df.merge(hot_df_in, on='item_id', how='left')
     features_df.to_csv(feature_caching_path, index=False)
 
@@ -772,36 +799,90 @@ def do_featuring(
     print('user点击序中item平均热度、最大热度、最小热度 doing')
     all_phase_click_in = all_phase_click_in.merge(hot_df_in, on='item_id', how='left')
     user_item_hot_df = \
-        all_phase_click_in.groupby('user_id').agg({'item_deg': lambda x: ','.join([str(i) for i in list(x)])}).reset_index()
+        all_phase_click_in.groupby('user_id').agg(
+            {'{}day_item_deg'.format(day): lambda x: ','.join([str(i) for i in list(x)])}).reset_index()
     user_item_hot_df.columns = ['user_id', 'item_hot_arr']
     user_item_hot_df['item_hot_arr'] = user_item_hot_df.apply(
         lambda x: np.array(list(x['item_hot_arr'].split(',')), dtype=np.int), axis=1)
     user_item_hot_dict = utils.two_columns_df2dict(user_item_hot_df)
 
-    features_df['user_item_mean_deg'] = \
+    features_df['{}day_user_item_mean_deg'.format(day)] = \
         features_df.apply(
-            lambda x: np.nanmean(user_item_hot_dict.get(x['user_id'])) if user_item_hot_dict.get(x['user_id']) is not None else np.nan,
+            lambda x: np.nanmean(user_item_hot_dict.get(x['user_id'])) if user_item_hot_dict.get(
+                x['user_id']) is not None else np.nan,
             axis=1
         )
-    features_df['user_item_min_deg'] = \
+    features_df['{}day_user_item_min_deg'.format(day)] = \
         features_df.apply(
             lambda x: np.nanmin(user_item_hot_dict.get(x['user_id'])) if user_item_hot_dict.get(
                 x['user_id']) is not None else np.nan,
             axis=1
         )
-    features_df['user_item_max_deg'] = \
+    features_df['{}day_user_item_max_deg'.format(day)] = \
         features_df.apply(
             lambda x: np.nanmax(user_item_hot_dict.get(x['user_id'])) if user_item_hot_dict.get(
+                x['user_id']) is not None else np.nan,
+            axis=1
+        )
+
+    features_df['{}day_user_item_var_deg'.format(day)] = \
+        features_df.apply(
+            lambda x: np.nanvar(user_item_hot_dict.get(x['user_id'])) if user_item_hot_dict.get(
+                x['user_id']) is not None else np.nan,
+            axis=1
+        )
+    features_df['{}day_user_item_median_deg'.format(day)] = \
+        features_df.apply(
+            lambda x: np.nanmedian(user_item_hot_dict.get(x['user_id'])) if user_item_hot_dict.get(
                 x['user_id']) is not None else np.nan,
             axis=1
         )
     features_df.to_csv(feature_caching_path, index=False)
 
 
+    # new
+    print('用户点击所有item的总热度 特征 doing')
+    user2total_deg_dict = utils.get_user2total_deg_dict(all_phase_click_in)
+    features_df['{}day_user_total_deg'.format(day)] = features_df.apply(
+        lambda x: user2total_deg_dict.get(x['user_id']),
+        axis=1
+    )
+
+    print('用户点击所有item的总热度/用户点击item数量 特征 doing')
+    features_df['{}day_user_avg_deg'.format(day)] = \
+        features_df['{}day_user_total_deg'.format(day)] / features_df['{}day_user_click_num'.format(day)]
+
+    features_df.to_csv(feature_caching_path, index=False)
+
+    print('用户最近k个item热度 特征 doing')
+    # user和最近k个item字典
+    user2kitem_dict = utils.get_user2kitem_dict(all_phase_click_in, conf.itemcf_num)
+    item2deg_dict = utils.two_columns_df2dict(hot_df_in)
+    tmp = None
+    for i in tqdm(range(conf.itemcf_num)):
+        features_df['{}day_{}_item_deg'.format(day, i)] = features_df.apply(
+            lambda x: item2deg_dict.get(user2kitem_dict[x['user_id']][i])
+            if user2kitem_dict.get(x['user_id']) is not None and len(user2kitem_dict.get(x['user_id'])) > i
+            else None,
+            axis=1
+        )
+        if tmp is None:
+            tmp = 0 + features_df['{}day_{}_item_deg'.format(day, i)]
+        else:
+            tmp += features_df['{}day_{}_item_deg'.format(day, i)]
+
+        if i > 0:
+            features_df['{}day_top_{}_item_deg'.format(day, i)] = tmp
+    features_df.to_csv(feature_caching_path, index=False)
+
+    return features_df
+
+def click_interval_features(features_df, all_phase_click_in, feature_caching_path, day):
     ''' user平均点击间隔、最大点击间隔、最小点击间隔 -- 需要分train和test两个集合统计 '''
     print('user平均点击间隔、最大点击间隔、最小点击间隔 doing')
     train_time_interval_df = \
-        all_phase_click_in.groupby('user_id').agg({conf.new_time_name: lambda x: ','.join([str(i) for i in list(x)])}).reset_index()
+        all_phase_click_in.groupby('user_id').agg(
+            {conf.new_time_name: lambda x: ','.join([str(i) for i in list(x)])}).reset_index()
     train_time_interval_df.columns = ['user_id', 'time_interval_arr']
     train_time_interval_df['time_interval_arr'] = train_time_interval_df.apply(
         lambda x: np.array(list(x['time_interval_arr'].split(',')), dtype=np.float)[:-1] -
@@ -810,36 +891,66 @@ def do_featuring(
     )
     train_time_interval_dict = utils.two_columns_df2dict(train_time_interval_df)
 
-    features_df['user_click_interval_mean'] = \
+    features_df['{}day_user_click_interval_mean'.format(day)] = \
         features_df.apply(
             lambda x: np.nanmean(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
                 x['user_id']) is not None else np.nan,
             axis=1
         )
-    features_df['user_click_interval_min'] = \
+    features_df['{}day_user_click_interval_min'.format(day)] = \
         features_df.apply(
             lambda x: np.nanmin(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
                 x['user_id']) is not None else np.nan,
             axis=1
         )
-    features_df['user_click_interval_max'] = \
+    features_df['{}day_user_click_interval_max'.format(day)] = \
         features_df.apply(
             lambda x: np.nanmax(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
                 x['user_id']) is not None else np.nan,
             axis=1
         )
+    features_df['{}day_user_click_interval_var'.format(day)] = \
+        features_df.apply(
+            lambda x: np.nanvar(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
+                x['user_id']) is not None else np.nan,
+            axis=1
+        )
+    features_df['{}day_user_click_interval_median'.format(day)] = \
+        features_df.apply(
+            lambda x: np.nanmedian(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
+                x['user_id']) is not None else np.nan,
+            axis=1
+        )
     features_df.to_csv(feature_caching_path, index=False)
 
+    # new
+    print('用户点击深度/平均时间间隔 特征 doing')
+    features_df['{}day_user_mean_click'.format(day)] = \
+        features_df['{}day_user_click_num'.format(day)] / features_df['{}day_user_click_interval_mean'.format(day)]
+    features_df['{}day_user_median_click'.format(day)] = \
+        features_df['{}day_user_click_num'.format(day)] / features_df['{}day_user_click_interval_median'.format(day)]
+
+    print('用户点击深度/时间跨度 特征 doing')
+    user2click_span_dict = utils.get_user2click_span_dict(all_phase_click_in)
+    features_df['user_span_click'] = features_df.apply(
+        lambda x: x['user_click_num'] / user2click_span_dict.get(x['user_id'])
+        if user2click_span_dict.get(x['user_id']) is not None else None,
+        axis=1
+    )
+    features_df.to_csv(feature_caching_path, index=False)
+
+    return features_df
+
+def itemcf_score_features(features_df, all_phase_click_in, feature_caching_path, day, itemcf_score_maxtrix):
     '''
-    itemCF相似度：
-    '''
+        itemCF相似度：
+        '''
     time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     print('itemCF相似度特征 start time:{}'.format(time_str))
-    # itemcf_score_maxtrix = pickle.load(open('./cache/features_cache/item_sim_list', 'rb'))
     # user和最近k个item字典
     user2kitem_dict = utils.get_user2kitem_dict(all_phase_click_in, conf.itemcf_num)
     for i in tqdm(range(conf.itemcf_num)):
-        features_df['{}_item2item_itemcf_score'.format(i)] = features_df.apply(
+        features_df['{}day_{}_item2item_itemcf_score'.format(day, i)] = features_df.apply(
             lambda x:
             itemcf_score_maxtrix.get(user2kitem_dict[x['user_id']][i]).get(x['item_id'])
             if user2kitem_dict.get(x['user_id']) is not None
@@ -850,7 +961,7 @@ def do_featuring(
             axis=1
         )
 
-        features_df['item2{}_item_itemcf_score'.format(i)] = features_df.apply(
+        features_df['{}day_item2{}_item_itemcf_score'.format(day, i)] = features_df.apply(
             lambda x:
             itemcf_score_maxtrix.get(x['item_id']).get(user2kitem_dict[x['user_id']][i])
             if user2kitem_dict.get(x['user_id']) is not None
@@ -861,61 +972,6 @@ def do_featuring(
             axis=1
         )
     features_df.to_csv(feature_caching_path, index=False)
-
-    '''
-    新增统计特征
-    用户点击深度/平均时间间隔 -- 间接反应用户活跃度：更活跃的用户应该值较大，因为经常发生点击行为时间间隔更小
-    用户点击深度/时间跨度    -- 应该没有什么用
-    用户点击所有item的总热度 -- 用户对热门item的偏好程度，一定程度上反应上条特征中用户是否活跃
-    用户点击所有item的总热度/用户点击item数量 -- 用户点击平均热度，消除用户点击深度影响
-    用户最近1/2/3个item热度（单独热度、总热度）
-    '''
-    time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-    print('新增统计特征 start time:{}'.format(time_str))
-    print('用户点击深度/平均时间间隔 特征 doing')
-    features_df['user_avg_click'] = features_df['user_click_num'] / features_df['user_click_interval_mean']
-    print('用户点击深度/时间跨度 特征 doing')
-    user2click_span_dict = utils.get_user2click_span_dict(all_phase_click_in)
-    features_df['user_span_click'] = features_df.apply(
-        lambda x: x['user_click_num'] / user2click_span_dict.get(x['user_id'])
-        if user2click_span_dict.get(x['user_id']) is not None else None,
-        axis=1
-    )
-    features_df.to_csv(feature_caching_path, index=False)
-
-    print('用户点击所有item的总热度 特征 doing')
-    user2total_deg_dict = utils.get_user2total_deg_dict(all_phase_click_in)
-    features_df['user_total_deg'] = features_df.apply(
-        lambda x: user2total_deg_dict.get(x['user_id']),
-        axis=1
-    )
-    features_df.to_csv(feature_caching_path, index=False)
-
-    print('用户点击所有item的总热度/用户点击item数量 特征 doing')
-    features_df['user_avg_deg'] = features_df['user_total_deg'] / features_df['user_click_num']
-
-    print('用户最近k个item热度 特征 doing')
-    item2deg_dict = utils.two_columns_df2dict(hot_df_in)
-    tmp = None
-    for i in tqdm(range(conf.itemcf_num)):
-        features_df['{}_item_deg'.format(i)] = features_df.apply(
-            lambda x: item2deg_dict.get(user2kitem_dict[x['user_id']][i])
-            if user2kitem_dict.get(x['user_id']) is not None and len(user2kitem_dict.get(x['user_id'])) > i
-            else None,
-            axis=1
-        )
-        if tmp is None:
-            tmp = 0 + features_df['{}_item_deg'.format(i)]
-        else:
-            tmp += features_df['{}_item_deg'.format(i)]
-
-        if i > 0:
-            features_df['top_{}_item_deg'.format(i)] = tmp
-    features_df.to_csv(feature_caching_path, index=False)
-
-    features_df = process_after_featuring(features_df, is_recall)
-    features_df.to_csv(feature_caching_path, index=False)
-    print(features_df.iloc[:5, :])
 
     return features_df
 
