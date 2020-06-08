@@ -492,7 +492,12 @@ def cal_user_item_sim_by_embvec(df, user_features_dict, item_emb_dict):
                 if user_features_dict['{}_day_user_emb_vec'.format(i)].get(x['user_id']) is not None and not isinstance(
                     user_features_dict['{}_day_user_emb_vec'.format(i)].get(x['user_id']), np.float)
                 else None,
-                item_emb_dict['{}day_item_vec'.format(i)].get(x['item_id'])
+
+                np.array([float(num) for num in
+                          item_emb_dict['{}day_item_vec'.format(i)].get(x['item_id']).split(',')])
+                if item_emb_dict['{}day_item_vec'.format(i)].get(x['item_id']) is not None and not isinstance(
+                    item_emb_dict['{}day_item_vec'.format(i)].get(x['item_id']), np.float)
+                else None,
                 # item2vec_dict['txt_vec'].get(x['item_id'])
             ),
             axis=1
@@ -505,7 +510,13 @@ def cal_user_item_sim_by_embvec(df, user_features_dict, item_emb_dict):
             if user_features_dict['earlier_day_user_emb_vec'].get(x['user_id']) is not None and not isinstance(
                 user_features_dict['earlier_day_user_emb_vec'].get(x['user_id']), np.float)
             else None,
-            item_emb_dict['earlier_day_item_vec'].get(x['item_id'])
+            # item_emb_dict['earlier_day_item_vec'].get(x['item_id'])
+
+            np.array([float(num) for num in
+                      item_emb_dict['earlier_day_item_vec'].get(x['item_id']).split(',')])
+            if item_emb_dict['earlier_day_item_vec'].get(x['item_id']) is not None and not isinstance(
+                item_emb_dict['earlier_day_item_vec'].get(x['item_id']), np.float)
+            else None,
             # item2vec_dict['txt_vec'].get(x['item_id'])
         ),
         axis=1
@@ -518,7 +529,13 @@ def cal_user_item_sim_by_embvec(df, user_features_dict, item_emb_dict):
             if user_features_dict['all_day_user_emb_vec'].get(x['user_id']) is not None and not isinstance(
                 user_features_dict['all_day_user_emb_vec'].get(x['user_id']), np.float)
             else None,
-            item_emb_dict['all_day_item_vec'].get(x['item_id'])
+            # item_emb_dict['all_day_item_vec'].get(x['item_id'])
+
+            np.array([float(num) for num in
+                      item_emb_dict['all_day_item_vec'].get(x['item_id']).split(',')])
+            if item_emb_dict['all_day_item_vec'].get(x['item_id']) is not None and not isinstance(
+                item_emb_dict['all_day_item_vec'].get(x['item_id']), np.float)
+            else None,
             # item2vec_dict['txt_vec'].get(x['item_id'])
         ),
         axis=1
@@ -889,7 +906,7 @@ def do_featuring(
         user_features_dict, item_emb_dict = get_user_features_by_embvec(sample_df, process_num, all_phase_click_in, dim)
         utils.sava_user_features_dict(user_features_dict, conf.user_emb_features_path)
 
-    features_df = cal_txt_img_sim_by_embvec(sample_df, process_num, user_features_dict, item_emb_dict)
+    features_df = cal_txt_img_sim_by_embvec(features_df, process_num, user_features_dict, item_emb_dict)
     features_df.to_csv(feature_caching_path, index=False)
 
 
