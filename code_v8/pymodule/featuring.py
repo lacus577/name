@@ -493,11 +493,7 @@ def cal_user_item_sim_by_embvec(df, user_features_dict, item_emb_dict):
                     user_features_dict['{}_day_user_emb_vec'.format(i)].get(x['user_id']), np.float)
                 else None,
 
-                np.array([float(num) for num in
-                          item_emb_dict['{}day_item_vec'.format(i)]['item'].get(x['item_id']).split(',')])
-                if item_emb_dict['{}day_item_vec'.format(i)]['item'].get(x['item_id']) is not None and not isinstance(
-                    item_emb_dict['{}day_item_vec'.format(i)]['item'].get(x['item_id']), np.float)
-                else None,
+                item_emb_dict['{}day_item_vec'.format(i)]['item'].get(x['item_id'])
                 # item2vec_dict['txt_vec'].get(x['item_id'])
             ),
             axis=1
@@ -512,11 +508,7 @@ def cal_user_item_sim_by_embvec(df, user_features_dict, item_emb_dict):
             else None,
             # item_emb_dict['earlier_day_item_vec'].get(x['item_id'])
 
-            np.array([float(num) for num in
-                      item_emb_dict['earlier_day_item_vec']['item'].get(x['item_id']).split(',')])
-            if item_emb_dict['earlier_day_item_vec']['item'].get(x['item_id']) is not None and not isinstance(
-                item_emb_dict['earlier_day_item_vec']['item'].get(x['item_id']), np.float)
-            else None,
+            item_emb_dict['earlier_day_item_vec']['item'].get(x['item_id'])
             # item2vec_dict['txt_vec'].get(x['item_id'])
         ),
         axis=1
@@ -531,11 +523,7 @@ def cal_user_item_sim_by_embvec(df, user_features_dict, item_emb_dict):
             else None,
             # item_emb_dict['all_day_item_vec'].get(x['item_id'])
 
-            np.array([float(num) for num in
-                      item_emb_dict['all_day_item_vec']['item'].get(x['item_id']).split(',')])
-            if item_emb_dict['all_day_item_vec']['item'].get(x['item_id']) is not None and not isinstance(
-                item_emb_dict['all_day_item_vec']['item'].get(x['item_id']), np.float)
-            else None,
+            item_emb_dict['all_day_item_vec']['item'].get(x['item_id'])
             # item2vec_dict['txt_vec'].get(x['item_id'])
         ),
         axis=1
