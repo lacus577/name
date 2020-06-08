@@ -73,6 +73,7 @@ total_user_recall_path = './cache/features_cache/total_user_recall_500.csv'
 
 ''' 用户画像特征 '''
 user_features_path = './cache/features_cache/user_features.csv'
+user_emb_features_path = './cache/features_cache/user_emb_features.csv'
 
 # 用户点击最大深度
 MAX_CLICK_LEN = 500
