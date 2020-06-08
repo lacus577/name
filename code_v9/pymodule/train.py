@@ -62,8 +62,8 @@ if __name__ == '__main__':
     all_phase_click_no_qtime = all_phase_click[all_phase_click['train_or_test'] != 'predict']
 
     # 将数据按天切分成14天，从第七天开始构建样本
-    min_time = int(np.min(all_phase_click_no_qtime['time']))
-    max_time = int(np.max(all_phase_click_no_qtime['time'])) + 1
+    min_time = int(np.min(all_phase_click_no_qtime[conf.new_time_name]))
+    max_time = int(np.max(all_phase_click_no_qtime[conf.new_time_name])) + 1
     step = (max_time - min_time) // conf.days
 
     total_feature_df = pd.DataFrame()
@@ -71,8 +71,8 @@ if __name__ == '__main__':
     for end_time in range(min_time + 7 * step, max_time, step):
         print('period {} ...'.format(end_time))
         period_click_df = all_phase_click_no_qtime[
-            (all_phase_click_no_qtime['time'] <= end_time) &
-            (all_phase_click_no_qtime['time'] >= min_time)
+            (all_phase_click_no_qtime[conf.new_time_name] <= end_time) &
+            (all_phase_click_no_qtime[conf.new_time_name] >= min_time)
         ]
 
         # 对每个user取最后一个点击作为候选正样本，召回命中才是正式正样本
