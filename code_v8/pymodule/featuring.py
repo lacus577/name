@@ -755,7 +755,7 @@ def do_featuring(
     用户点击所有item的总热度/用户点击item数量 -- 用户点击平均热度，消除用户点击深度影响
     用户最近1/2/3个item热度（单独热度、总热度）
     '''
-
+    print(features_df.columns)
     features_df = process_after_featuring(features_df, is_recall)
     features_df.to_csv(feature_caching_path, index=False)
     print(features_df.iloc[:5, :])
@@ -893,32 +893,32 @@ def click_interval_features(features_df, all_phase_click_in, feature_caching_pat
 
     features_df['{}day_user_click_interval_mean'.format(day)] = \
         features_df.apply(
-            lambda x: np.nanmean(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
-                x['user_id']) is not None else np.nan,
+            lambda x: np.nanmean(train_time_interval_dict.get(x['user_id']))
+            if train_time_interval_dict.get(x['user_id']) is not None and len(train_time_interval_dict.get(x['user_id'])) > 0 else None,
             axis=1
         )
     features_df['{}day_user_click_interval_min'.format(day)] = \
         features_df.apply(
-            lambda x: np.nanmin(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
-                x['user_id']) is not None else np.nan,
+            lambda x: np.nanmin(train_time_interval_dict.get(x['user_id']))
+            if train_time_interval_dict.get(x['user_id']) is not None and len(train_time_interval_dict.get(x['user_id'])) > 0 else None,
             axis=1
         )
     features_df['{}day_user_click_interval_max'.format(day)] = \
         features_df.apply(
-            lambda x: np.nanmax(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
-                x['user_id']) is not None else np.nan,
+            lambda x: np.nanmax(train_time_interval_dict.get(x['user_id']))
+            if train_time_interval_dict.get(x['user_id']) is not None and len(train_time_interval_dict.get(x['user_id'])) > 0 else None,
             axis=1
         )
     features_df['{}day_user_click_interval_var'.format(day)] = \
         features_df.apply(
-            lambda x: np.nanvar(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
-                x['user_id']) is not None else np.nan,
+            lambda x: np.nanvar(train_time_interval_dict.get(x['user_id']))
+            if train_time_interval_dict.get(x['user_id']) is not None and len(train_time_interval_dict.get(x['user_id'])) > 0 else None,
             axis=1
         )
     features_df['{}day_user_click_interval_median'.format(day)] = \
         features_df.apply(
-            lambda x: np.nanmedian(train_time_interval_dict.get(x['user_id'])) if train_time_interval_dict.get(
-                x['user_id']) is not None else np.nan,
+            lambda x: np.nanmedian(train_time_interval_dict.get(x['user_id']))
+            if train_time_interval_dict.get(x['user_id']) is not None and len(train_time_interval_dict.get(x['user_id'])) > 0 else None,
             axis=1
         )
     features_df.to_csv(feature_caching_path, index=False)
