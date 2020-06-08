@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
     hot_df = all_phase_click_no_qtime.groupby('item_id')['user_id'].count().reset_index()
     hot_df.columns = ['item_id', 'item_deg']
-    hot_df = hot_df.sort_values('item_deg', ascending=False).reset_index()
+    hot_df = hot_df.sort_values('item_deg', ascending=False).reset_index(drop=True)
 
     # 相似度矩阵构建
     if os.path.exists(conf.sim_list_path):
