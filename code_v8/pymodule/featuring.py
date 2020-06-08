@@ -198,6 +198,7 @@ def get_train_test_data(
     return feature_all_train_test
 
 def cal_user_feature_by_embvec(df, all_phase_click_in, dim):
+    df = utils.process_time(df, conf.time_puls)
     # 1,2,3,7,all
     # 将数据按天切分成14天，从第七天开始构建样本
     min_time = int(np.min(all_phase_click_in[conf.new_time_name]))
@@ -900,9 +901,15 @@ def do_featuring(
 
     # 过滤出比正样本时间早的点击
         # 每个user最早的正样本
-    user2time_dict = utils.two_columns_df2dict(
-        sample_df[sample_df['label'] == 1].sort_values('time', ascending=True).groupby('user_id').head(1)[['user_id', conf.new_time_name]]
-    )
+    if is_recall:
+        user2time_dict = utils.two_columns_df2dict(
+            sample_df.sort_values('time', ascending=True).groupby('user_id').head(1)[
+                ['user_id', conf.new_time_name]]
+        )
+    else:
+        user2time_dict = utils.two_columns_df2dict(
+            sample_df[sample_df['label'] == 1].sort_values('time', ascending=True).groupby('user_id').head(1)[['user_id', conf.new_time_name]]
+        )
     user_click_df = all_phase_click_in[all_phase_click_in['user_id'].isin(sample_df['user_id'])].reset_index(drop=True)
     user_click_df = user_click_df[
         user_click_df.groupby('user_id').apply(lambda x: x[conf.new_time_name] < user2time_dict[x['user_id'].iloc[0]]).reset_index(drop=True)
