@@ -200,16 +200,16 @@ def get_train_test_data(
 def cal_user_feature(df, all_phase_click_in, item_info_df):
     # 1,2,3,7,all
     # 将数据按天切分成14天，从第七天开始构建样本
-    min_time = int(np.min(all_phase_click_in['time']))
-    max_time = int(np.max(all_phase_click_in['time'])) + 1
+    min_time = int(np.min(all_phase_click_in[conf.new_time_name]))
+    max_time = int(np.max(all_phase_click_in[conf.new_time_name])) + 1
     step = (max_time - min_time) // conf.days
 
     # 过滤出比正样本时间早的点击
-    user2time_dict = utils.two_columns_df2dict(df[['user_id', 'time']])
+    user2time_dict = utils.two_columns_df2dict(df[['user_id', conf.new_time_name]])
     user_click_df = all_phase_click_in[all_phase_click_in['user_id'].isin(df['user_id'])].reset_index(drop=True)
     user_click_df = user_click_df[
         user_click_df.groupby('user_id').apply(
-            lambda x: x['time'] < user2time_dict[x['user_id'].iloc[0]]
+            lambda x: x[conf.new_time_name] < user2time_dict[x['user_id'].iloc[0]]
         ).reset_index(drop=True)
     ].reset_index(drop=True)
 
@@ -219,7 +219,7 @@ def cal_user_feature(df, all_phase_click_in, item_info_df):
     for i in tqdm(conf.time_periods):
         days_click_df = user_click_df[
             user_click_df.groupby('user_id').apply(
-                lambda x: x['time'] >= user2time_dict[x['user_id'].iloc[0]] -  i * step
+                lambda x: x[conf.new_time_name] >= user2time_dict[x['user_id'].iloc[0]] - i * step
             ).reset_index(drop=True)
         ]
 
@@ -698,23 +698,23 @@ def do_featuring(
     features_df.to_csv(feature_caching_path, index=False)
 
     # 获取时间片中的点击
-    min_time = int(np.min(all_phase_click_in['time']))
-    max_time = int(np.max(all_phase_click_in['time'])) + 1
+    min_time = int(np.min(all_phase_click_in[conf.new_time_name]))
+    max_time = int(np.max(all_phase_click_in[conf.new_time_name])) + 1
     step = (max_time - min_time) // conf.days
 
     # 过滤出比正样本时间早的点击
         # 每个user最早的正样本
     user2time_dict = utils.two_columns_df2dict(
-        sample_df[sample_df['label'] == 1].sort_values('time', ascending=True).groupby('user_id').head(1)[['user_id', 'time']]
+        sample_df[sample_df['label'] == 1].sort_values('time', ascending=True).groupby('user_id').head(1)[['user_id', conf.new_time_name]]
     )
     user_click_df = all_phase_click_in[all_phase_click_in['user_id'].isin(sample_df['user_id'])].reset_index(drop=True)
     user_click_df = user_click_df[
-        user_click_df.groupby('user_id').apply(lambda x: x['time'] < user2time_dict[x['user_id'].iloc[0]]).reset_index(drop=True)
+        user_click_df.groupby('user_id').apply(lambda x: x[conf.new_time_name] < user2time_dict[x['user_id'].iloc[0]]).reset_index(drop=True)
     ].reset_index(drop=True)
     for time_interval in tqdm(conf.time_periods):
         days_click_df = user_click_df[
             user_click_df.groupby('user_id').apply(
-                lambda x: x['time'] >= user2time_dict[x['user_id'].iloc[0]] - time_interval * step
+                lambda x: x[conf.new_time_name] >= user2time_dict[x['user_id'].iloc[0]] - time_interval * step
             ).reset_index(drop=True)
         ]
 
