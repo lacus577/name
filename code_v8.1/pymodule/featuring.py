@@ -234,8 +234,8 @@ def get_user_features(sample_df, process_num, all_phase_click_in, item_info_df, 
 def cal_user_feature(df, all_phase_click_in, item_info_df):
     # 1,2,3,7,all
     # 将数据按天切分成14天，从第七天开始构建样本
-    min_time = int(np.min(all_phase_click_in[conf.new_time_name]))
-    max_time = int(np.max(all_phase_click_in[conf.new_time_name])) + 1
+    min_time = int(np.min(all_phase_click_in['time']))
+    max_time = int(np.max(all_phase_click_in['time'])) + 1
     step = (max_time - min_time) // conf.days
 
     # 过滤出比正样本时间早的点击
@@ -708,7 +708,7 @@ def do_featuring(
     time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     print('统计特征 start time:{}'.format(time_str))
 
-    all_phase_click_in = all_phase_click_in.sort_values(['user_id', conf.new_time_name], ascending=False).reset_index(drop=True)
+    all_phase_click_in = all_phase_click_in.sort_values(['user_id', 'time'], ascending=False).reset_index(drop=True)
 
     ''' user点击序中user点击次数（即 点击深度 TODO 去做个统计：点击深度和冷门物品偏好的关系） -- 全量数据集统计 '''
     print('用户点击次数特征 doing')
