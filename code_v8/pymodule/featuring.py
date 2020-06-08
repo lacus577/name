@@ -1136,6 +1136,7 @@ def statistic_features(features_df, all_phase_click_in, feature_caching_path, ho
 def click_interval_features(features_df, all_phase_click_in, feature_caching_path, day):
     ''' user平均点击间隔、最大点击间隔、最小点击间隔 -- 需要分train和test两个集合统计 '''
     print('user平均点击间隔、最大点击间隔、最小点击间隔 doing')
+    all_phase_click_in = all_phase_click_in.sort_values(['user_id', 'time'], ascending=False).reset_index(drop=True)
     train_time_interval_df = \
         all_phase_click_in.groupby('user_id').agg(
             {conf.new_time_name: lambda x: ','.join([str(i) for i in list(x)])}).reset_index()
