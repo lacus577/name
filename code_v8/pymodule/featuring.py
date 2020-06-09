@@ -206,6 +206,8 @@ def cal_user_feature_by_embvec(df, all_phase_click_in, dim):
     step = (max_time - min_time) // conf.days
 
     # 过滤出比正样本时间早的点击
+    if conf.new_time_name not in df.columns:
+        df = utils.process_time(df, conf.time_puls)
     user2time_dict = utils.two_columns_df2dict(df[['user_id', conf.new_time_name]])
     user_click_df = all_phase_click_in[all_phase_click_in['user_id'].isin(df['user_id'])].reset_index(drop=True)
     user_click_df = user_click_df[
@@ -265,6 +267,8 @@ def cal_user_feature(df, all_phase_click_in, item_info_df):
     step = (max_time - min_time) // conf.days
 
     # 过滤出比正样本时间早的点击
+    if conf.new_time_name not in df.columns:
+        df = utils.process_time(df, conf.time_puls)
     user2time_dict = utils.two_columns_df2dict(df[['user_id', conf.new_time_name]])
     user_click_df = all_phase_click_in[all_phase_click_in['user_id'].isin(df['user_id'])].reset_index(drop=True)
     user_click_df = user_click_df[
