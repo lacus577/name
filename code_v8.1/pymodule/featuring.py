@@ -898,8 +898,11 @@ def do_featuring(
     # 过滤出比正样本时间早的点击
         # 每个user最早的正样本
     if is_recall:
+        phase_qtime_df = utils.read_qtime(conf.test_path, phase)
+        phase_qtime_df = utils.process_time(phase_qtime_df, conf.time_puls)
         user2time_dict = utils.two_columns_df2dict(
-            sample_df.sort_values('time', ascending=True).groupby('user_id').head(1)[['user_id', conf.new_time_name]]
+            phase_qtime_df.sort_values('time', ascending=True).groupby('user_id').head(1)[
+                ['user_id', conf.new_time_name]]
         )
     else:
         user2time_dict = utils.two_columns_df2dict(
