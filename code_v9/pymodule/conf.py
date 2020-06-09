@@ -72,6 +72,10 @@ features_cache_path = './cache/features_cache/features_{}.csv'
 ''' 训练集user召回结果缓存 '''
 total_user_recall_path = './cache/features_cache/total_user_recall_500_{}.csv'
 
+''' 用户画像特征 '''
+user_features_path = './cache/features_cache/user_features.csv'
+user_emb_features_path = './cache/features_cache/user_emb_features.csv'
+
 # 用户点击最大深度
 MAX_CLICK_LEN = 500
 
