@@ -175,10 +175,10 @@ def get_user2click_span_dict(df):
 
     return result_dict
 
-def get_user2total_deg_dict(df):
-    tmp = df.groupby('user_id').agg({'item_deg': lambda x: np.sum(list(x))}).reset_index()
+def get_user2total_deg_dict(df, day):
+    tmp = df.groupby('user_id').agg({'{}day_item_deg'.format(day): lambda x: np.sum(list(x))}).reset_index()
 
-    result_dict = dict(zip(tmp['user_id'], tmp['item_deg']))
+    result_dict = dict(zip(tmp['user_id'], tmp['{}day_item_deg'.format(day)]))
 
     return result_dict
 
@@ -241,6 +241,24 @@ def read_item_user_info():
 
     return item_info_df
 
+def read_user_info():
+    ''' 读取item和user属性 '''
+    train_underexpose_user_feat_path = os.path.join(conf.train_path, 'underexpose_user_feat.csv')
+    train_underexpose_user_feat_df_columns = \
+        ['user_id', 'user_age_level', 'user_gender', 'user_city_level']
+
+    user_info_df = pd.read_csv(
+        train_underexpose_user_feat_path,
+        names=train_underexpose_user_feat_df_columns,
+        dtype={'user_id': np.str, 'item_id': np.str, 'time': np.float}
+    )
+
+    return user_info_df
+
+def clean_user_info(df):
+    df.loc[:, 'user_gender'] = df['user_gender'].replace({'F': 1, 'M': 2})
+    return df
+
 def read_all_phase_click():
     if conf.is_click_cached:
         all_phase_click_666 = pd.read_csv(conf.click_cache_path, dtype={'user_id': np.str, 'item_id': np.str})
@@ -289,3 +307,67 @@ def get_candidate_positive_samples(df):
     tmp = tmp[tmp['item_id'] > conf.candidate_positive_num + 2]     # 删掉候选正样本后训练集里面至少有两个点击记录用于训练
     df = df[df['user_id'].isin(tmp['user_id'])].sample(frac=1, random_state=1)
     return df.groupby('user_id').head(conf.candidate_positive_num).reset_index(drop=True)
+
+
+def sava_user_features_dict(user_features_dict, save_path):
+    result_df = pd.DataFrame(data=user_features_dict).reset_index()
+    result_df = result_df.rename(columns={'index': 'user_id'})
+    print(result_df)
+    result_df.to_csv(save_path, index=False)
+
+def user_features_df2dict(df):
+    df = df.set_index('user_id', drop=True)
+    df.index.name = ''
+    result_dict = df.to_dict()
+    return result_dict
+
+def get_features(df, is_label, type):
+    ''' 特征列顺序 重新 组织 '''
+    pre_columns = ['user_id', 'item_id']
+    recall_columns = [conf.ITEM_CF_SCORE]
+    # part1_columns = ['click_item_user_sim', 'click_user_item_sim', 'user_click_num',
+    #                 'user_click_interval_mean', 'user_click_interval_min',
+    #                 'user_click_interval_max', 'item_deg', 'user_item_mean_deg',
+    #                 'user_item_min_deg', 'user_item_max_deg',
+    #                 '0_item2item_itemcf_score', 'item20_item_itemcf_score',
+    #                 '1_item2item_itemcf_score', 'item21_item_itemcf_score',
+    #                 '2_item2item_itemcf_score', 'item22_item_itemcf_score',
+    #                 '3_item2item_itemcf_score', 'item23_item_itemcf_score',
+    #                 '4_item2item_itemcf_score', 'item24_item_itemcf_score',
+    #                 'user_avg_click', 'user_span_click', 'user_total_deg', 'user_avg_deg',
+    #                 '0_item_deg', '1_item_deg', 'top_1_item_deg', '2_item_deg',
+    #                 'top_2_item_deg', '3_item_deg', 'top_3_item_deg', '4_item_deg',
+    #                 'top_4_item_deg']
+    # part2_columns = ['1_day_user_txt_sim', '1_day_user_img_sim',
+    #                 '2_day_user_txt_sim', '2_day_user_img_sim', '3_day_user_txt_sim',
+    #                 '3_day_user_img_sim', '7_day_user_txt_sim', '7_day_user_img_sim',
+    #                 'all_day_user_txt_sim', 'all_day_user_img_sim']
+    part1_columns = ['1day_click_item_user_sim', 'click_item_user_sim', '1day_click_user_item_sim', 'click_user_item_sim', '1day_user_click_num', '1day_item_deg', '1day_user_item_mean_deg', '1day_user_item_min_deg', '1day_user_item_max_deg', '1day_user_item_var_deg', '1day_user_item_median_deg', '1day_user_total_deg', '1day_user_avg_deg', '1day_0_item_deg', '1day_1_item_deg', '1day_top_1_item_deg', '1day_2_item_deg', '1day_top_2_item_deg', '1day_3_item_deg', '1day_top_3_item_deg', '1day_4_item_deg', '1day_top_4_item_deg', '1day_user_click_interval_mean', '1day_user_click_interval_min', '1day_user_click_interval_max', '1day_user_click_interval_var', '1day_user_click_interval_median', '1day_user_mean_click', '1day_user_median_click', '1day_user_span_click', '2day_click_item_user_sim', '2day_click_user_item_sim', '2day_user_click_num', '2day_item_deg', '2day_user_item_mean_deg', '2day_user_item_min_deg', '2day_user_item_max_deg', '2day_user_item_var_deg', '2day_user_item_median_deg', '2day_user_total_deg', '2day_user_avg_deg', '2day_0_item_deg', '2day_1_item_deg', '2day_top_1_item_deg', '2day_2_item_deg', '2day_top_2_item_deg', '2day_3_item_deg', '2day_top_3_item_deg', '2day_4_item_deg', '2day_top_4_item_deg', '2day_user_click_interval_mean', '2day_user_click_interval_min', '2day_user_click_interval_max', '2day_user_click_interval_var', '2day_user_click_interval_median', '2day_user_mean_click', '2day_user_median_click', '2day_user_span_click', '3day_click_item_user_sim', '3day_click_user_item_sim', '3day_user_click_num', '3day_item_deg', '3day_user_item_mean_deg', '3day_user_item_min_deg', '3day_user_item_max_deg', '3day_user_item_var_deg', '3day_user_item_median_deg', '3day_user_total_deg', '3day_user_avg_deg', '3day_0_item_deg', '3day_1_item_deg', '3day_top_1_item_deg', '3day_2_item_deg', '3day_top_2_item_deg', '3day_3_item_deg', '3day_top_3_item_deg', '3day_4_item_deg', '3day_top_4_item_deg', '3day_user_click_interval_mean', '3day_user_click_interval_min', '3day_user_click_interval_max', '3day_user_click_interval_var', '3day_user_click_interval_median', '3day_user_mean_click', '3day_user_median_click', '3day_user_span_click', '7day_click_item_user_sim', '7day_click_user_item_sim', '7day_user_click_num', '7day_item_deg', '7day_user_item_mean_deg', '7day_user_item_min_deg', '7day_user_item_max_deg', '7day_user_item_var_deg', '7day_user_item_median_deg', '7day_user_total_deg', '7day_user_avg_deg', '7day_0_item_deg', '7day_1_item_deg', '7day_top_1_item_deg', '7day_2_item_deg', '7day_top_2_item_deg', '7day_3_item_deg', '7day_top_3_item_deg', '7day_4_item_deg', '7day_top_4_item_deg', '7day_user_click_interval_mean', '7day_user_click_interval_min', '7day_user_click_interval_max', '7day_user_click_interval_var', '7day_user_click_interval_median', '7day_user_mean_click', '7day_user_median_click', '7day_user_span_click', 'earlierday_user_click_num', 'earlierday_item_deg', 'earlierday_user_item_mean_deg', 'earlierday_user_item_min_deg', 'earlierday_user_item_max_deg', 'earlierday_user_item_var_deg', 'earlierday_user_item_median_deg', 'earlierday_user_total_deg', 'earlierday_user_avg_deg', 'earlierday_0_item_deg', 'earlierday_1_item_deg', 'earlierday_top_1_item_deg', 'earlierday_2_item_deg', 'earlierday_top_2_item_deg', 'earlierday_3_item_deg', 'earlierday_top_3_item_deg', 'earlierday_4_item_deg', 'earlierday_top_4_item_deg', 'earlierday_user_click_interval_mean', 'earlierday_user_click_interval_min', 'earlierday_user_click_interval_max', 'earlierday_user_click_interval_var', 'earlierday_user_click_interval_median', 'earlierday_user_mean_click', 'earlierday_user_median_click', 'earlierday_user_span_click', 'earlierday_click_item_user_sim', 'earlierday_click_user_item_sim', 'allday_user_click_num', 'allday_item_deg', 'allday_user_item_mean_deg', 'allday_user_item_min_deg', 'allday_user_item_max_deg', 'allday_user_item_var_deg', 'allday_user_item_median_deg', 'allday_user_total_deg', 'allday_user_avg_deg', 'allday_0_item_deg', 'allday_1_item_deg', 'allday_top_1_item_deg', 'allday_2_item_deg', 'allday_top_2_item_deg', 'allday_3_item_deg', 'allday_top_3_item_deg', 'allday_4_item_deg', 'allday_top_4_item_deg', 'allday_user_click_interval_mean', 'allday_user_click_interval_min', 'allday_user_click_interval_max', 'allday_user_click_interval_var', 'allday_user_click_interval_median', 'allday_user_mean_click', 'allday_user_median_click', 'allday_user_span_click', 'allday_0_item2item_itemcf_score', 'allday_item20_item_itemcf_score', 'allday_1_item2item_itemcf_score', 'allday_item21_item_itemcf_score', 'allday_2_item2item_itemcf_score', 'allday_item22_item_itemcf_score', 'allday_3_item2item_itemcf_score', 'allday_item23_item_itemcf_score', 'allday_4_item2item_itemcf_score', 'allday_item24_item_itemcf_score', 'allday_click_item_user_sim', 'allday_click_user_item_sim']
+    part2_columns = ['1_day_user_txt_sim', '1_day_user_img_sim', '2_day_user_txt_sim', '2_day_user_img_sim', '3_day_user_txt_sim', '3_day_user_img_sim', '7_day_user_txt_sim', '7_day_user_img_sim', 'earlier_day_user_txt_sim', 'earlier_day_user_img_sim', 'all_day_user_txt_sim', 'all_day_user_img_sim']
+    part3_columns = ['1_day_user_emb_sim', '2_day_user_emb_sim', '3_day_user_emb_sim', '7_day_user_emb_sim', 'earlier_day_user_emb_sim', 'all_day_user_emb_sim']
+    all_columns = ['user_id', 'item_id', 'sim', '1_day_user_txt_sim', '1_day_user_img_sim', '2_day_user_txt_sim', '2_day_user_img_sim', '3_day_user_txt_sim', '3_day_user_img_sim', '7_day_user_txt_sim', '7_day_user_img_sim', 'earlier_day_user_txt_sim', 'earlier_day_user_img_sim', 'all_day_user_txt_sim', 'all_day_user_img_sim', '1_day_user_emb_sim', '2_day_user_emb_sim', '3_day_user_emb_sim', '7_day_user_emb_sim', 'earlier_day_user_emb_sim', 'all_day_user_emb_sim', '1day_click_item_user_sim', 'click_item_user_sim', '1day_click_user_item_sim', 'click_user_item_sim', '1day_user_click_num', '1day_item_deg', '1day_user_item_mean_deg', '1day_user_item_min_deg', '1day_user_item_max_deg', '1day_user_item_var_deg', '1day_user_item_median_deg', '1day_user_total_deg', '1day_user_avg_deg', '1day_0_item_deg', '1day_1_item_deg', '1day_top_1_item_deg', '1day_2_item_deg', '1day_top_2_item_deg', '1day_3_item_deg', '1day_top_3_item_deg', '1day_4_item_deg', '1day_top_4_item_deg', '1day_user_click_interval_mean', '1day_user_click_interval_min', '1day_user_click_interval_max', '1day_user_click_interval_var', '1day_user_click_interval_median', '1day_user_mean_click', '1day_user_median_click', '1day_user_span_click', '2day_click_item_user_sim', '2day_click_user_item_sim', '2day_user_click_num', '2day_item_deg', '2day_user_item_mean_deg', '2day_user_item_min_deg', '2day_user_item_max_deg', '2day_user_item_var_deg', '2day_user_item_median_deg', '2day_user_total_deg', '2day_user_avg_deg', '2day_0_item_deg', '2day_1_item_deg', '2day_top_1_item_deg', '2day_2_item_deg', '2day_top_2_item_deg', '2day_3_item_deg', '2day_top_3_item_deg', '2day_4_item_deg', '2day_top_4_item_deg', '2day_user_click_interval_mean', '2day_user_click_interval_min', '2day_user_click_interval_max', '2day_user_click_interval_var', '2day_user_click_interval_median', '2day_user_mean_click', '2day_user_median_click', '2day_user_span_click', '3day_click_item_user_sim', '3day_click_user_item_sim', '3day_user_click_num', '3day_item_deg', '3day_user_item_mean_deg', '3day_user_item_min_deg', '3day_user_item_max_deg', '3day_user_item_var_deg', '3day_user_item_median_deg', '3day_user_total_deg', '3day_user_avg_deg', '3day_0_item_deg', '3day_1_item_deg', '3day_top_1_item_deg', '3day_2_item_deg', '3day_top_2_item_deg', '3day_3_item_deg', '3day_top_3_item_deg', '3day_4_item_deg', '3day_top_4_item_deg', '3day_user_click_interval_mean', '3day_user_click_interval_min', '3day_user_click_interval_max', '3day_user_click_interval_var', '3day_user_click_interval_median', '3day_user_mean_click', '3day_user_median_click', '3day_user_span_click', '7day_click_item_user_sim', '7day_click_user_item_sim', '7day_user_click_num', '7day_item_deg', '7day_user_item_mean_deg', '7day_user_item_min_deg', '7day_user_item_max_deg', '7day_user_item_var_deg', '7day_user_item_median_deg', '7day_user_total_deg', '7day_user_avg_deg', '7day_0_item_deg', '7day_1_item_deg', '7day_top_1_item_deg', '7day_2_item_deg', '7day_top_2_item_deg', '7day_3_item_deg', '7day_top_3_item_deg', '7day_4_item_deg', '7day_top_4_item_deg', '7day_user_click_interval_mean', '7day_user_click_interval_min', '7day_user_click_interval_max', '7day_user_click_interval_var', '7day_user_click_interval_median', '7day_user_mean_click', '7day_user_median_click', '7day_user_span_click', 'earlierday_user_click_num', 'earlierday_item_deg', 'earlierday_user_item_mean_deg', 'earlierday_user_item_min_deg', 'earlierday_user_item_max_deg', 'earlierday_user_item_var_deg', 'earlierday_user_item_median_deg', 'earlierday_user_total_deg', 'earlierday_user_avg_deg', 'earlierday_0_item_deg', 'earlierday_1_item_deg', 'earlierday_top_1_item_deg', 'earlierday_2_item_deg', 'earlierday_top_2_item_deg', 'earlierday_3_item_deg', 'earlierday_top_3_item_deg', 'earlierday_4_item_deg', 'earlierday_top_4_item_deg', 'earlierday_user_click_interval_mean', 'earlierday_user_click_interval_min', 'earlierday_user_click_interval_max', 'earlierday_user_click_interval_var', 'earlierday_user_click_interval_median', 'earlierday_user_mean_click', 'earlierday_user_median_click', 'earlierday_user_span_click', 'earlierday_click_item_user_sim', 'earlierday_click_user_item_sim', 'allday_user_click_num', 'allday_item_deg', 'allday_user_item_mean_deg', 'allday_user_item_min_deg', 'allday_user_item_max_deg', 'allday_user_item_var_deg', 'allday_user_item_median_deg', 'allday_user_total_deg', 'allday_user_avg_deg', 'allday_0_item_deg', 'allday_1_item_deg', 'allday_top_1_item_deg', 'allday_2_item_deg', 'allday_top_2_item_deg', 'allday_3_item_deg', 'allday_top_3_item_deg', 'allday_4_item_deg', 'allday_top_4_item_deg', 'allday_user_click_interval_mean', 'allday_user_click_interval_min', 'allday_user_click_interval_max', 'allday_user_click_interval_var', 'allday_user_click_interval_median', 'allday_user_mean_click', 'allday_user_median_click', 'allday_user_span_click', 'allday_0_item2item_itemcf_score', 'allday_item20_item_itemcf_score', 'allday_1_item2item_itemcf_score', 'allday_item21_item_itemcf_score', 'allday_2_item2item_itemcf_score', 'allday_item22_item_itemcf_score', 'allday_3_item2item_itemcf_score', 'allday_item23_item_itemcf_score', 'allday_4_item2item_itemcf_score', 'allday_item24_item_itemcf_score', 'allday_click_item_user_sim', 'allday_click_user_item_sim']
+
+    if type == 0:
+        features_columns = pre_columns + recall_columns + part1_columns + part2_columns + part3_columns
+        assert 0 == len(set(features_columns) - set(all_columns))
+    elif type == 1:
+        features_columns = pre_columns + recall_columns + part1_columns
+    elif type == 2:
+        features_columns = pre_columns + recall_columns + part2_columns
+    elif type == 3:
+        features_columns = pre_columns + recall_columns + part3_columns
+    elif type == 4:
+        features_columns = pre_columns + recall_columns + part2_columns + part3_columns
+    elif type == 5:
+        features_columns = pre_columns + recall_columns + part1_columns + part2_columns
+    elif type == 6:
+        features_columns = pre_columns + recall_columns + part1_columns + part3_columns
+    else:
+        raise Exception('columns error.')
+
+    if is_label:
+        df = df[features_columns + ['label']]
+    else:
+        df = df[features_columns]
+
+    return df

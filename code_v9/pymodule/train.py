@@ -172,6 +172,8 @@ if __name__ == '__main__':
 
         total_feature_df = total_feature_df.append(feature_df)
 
+    # 选择特征进行训练
+    total_feature_df = utils.get_features(total_feature_df, is_label=1, type=0)
     print('feature shape:{}, positive feature num:{}'.format(total_feature_df.shape, total_feature_df[total_feature_df['label'] == 1].shape[0]))
     # 这里的hot_df与训练集不是同步的，暂时凑合着用
     hot_df = all_phase_click_no_qtime.groupby('item_id')['user_id'].count().reset_index()
@@ -285,6 +287,7 @@ if __name__ == '__main__':
                 itemcf_score_maxtrix=item_sim_list, item_info_df=item_info_df, phase=phase
             )
 
+        recall_feature_df = utils.get_features(recall_feature_df, is_label=0, type=0)
         submit_x = recall_feature_df[recall_feature_df.columns.difference(['user_id', 'item_id', 'label'])].values
         # TODO k此留出验证模型输出结果加权作为最终结果
         with open('./cache/model.pickle', 'rb') as f:

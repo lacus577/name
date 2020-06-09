@@ -46,6 +46,9 @@ new_embedding_dim = 32
 ''' 留出验证次数 '''
 k = 5
 
+''' 时间区间 '''
+time_periods = [1, 2, 3, 7]
+
 
 ''' -------------------------- constant --------------------------- '''
 train_path = '../../../../data/underexpose_train'
