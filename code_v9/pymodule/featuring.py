@@ -573,7 +573,7 @@ def cal_txt_img_sim_by_embvec(df, process_num, user_features_dict, item_emb_dict
 
 def cal_user_item_sim_v1(user_item_df, item_user_emb, user_item_emb, day):
     user_item_df['{}day_click_item_user_sim'.format(day)] = np.nan
-    user_item_df.loc[:, 'click_item_user_sim'] = user_item_df.apply(
+    user_item_df.loc[:, '{}day_click_item_user_sim'.format(day)] = user_item_df.apply(
         lambda x: my_cos_sim(
             item_user_emb['user'].get(x['user_id']),
             item_user_emb['item'].get(x['item_id'])
@@ -585,7 +585,7 @@ def cal_user_item_sim_v1(user_item_df, item_user_emb, user_item_emb, day):
 
     # todo 最小值待修订
     user_item_df['{}day_click_user_item_sim'.format(day)] = np.nan
-    user_item_df.loc[:, 'click_user_item_sim'] = user_item_df.apply(
+    user_item_df.loc[:, '{}day_click_user_item_sim'.format(day)] = user_item_df.apply(
         lambda x: my_cos_sim(
             user_item_emb['user'].get(x['user_id']),
             user_item_emb['item'].get(x['item_id'])
