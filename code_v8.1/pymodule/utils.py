@@ -353,7 +353,7 @@ def get_features(df, is_label, type):
     #                 '2_day_user_txt_sim', '2_day_user_img_sim', '3_day_user_txt_sim',
     #                 '3_day_user_img_sim', '7_day_user_txt_sim', '7_day_user_img_sim',
     #                 'all_day_user_txt_sim', 'all_day_user_img_sim']
-    part1_columns = ['1day_click_item_user_sim', 'click_item_user_sim', '1day_click_user_item_sim',
+    part1_columns = ['1day_click_item_user_sim', '1day_click_user_item_sim',
                      '1day_user_click_num', '1day_item_deg', '1day_user_item_mean_deg',
                      '1day_user_item_min_deg', '1day_user_item_max_deg', '1day_user_item_var_deg',
                      '1day_user_item_median_deg', '1day_user_total_deg', '1day_user_avg_deg', '1day_0_item_deg',
@@ -421,7 +421,7 @@ def get_features(df, is_label, type):
                    '7_day_user_img_sim', 'earlier_day_user_txt_sim', 'earlier_day_user_img_sim', 'all_day_user_txt_sim',
                    'all_day_user_img_sim', '1_day_user_emb_sim', '2_day_user_emb_sim', '3_day_user_emb_sim',
                    '7_day_user_emb_sim', 'earlier_day_user_emb_sim', 'all_day_user_emb_sim', '1day_click_item_user_sim',
-                   'click_item_user_sim', '1day_click_user_item_sim', '1day_user_click_num',
+                   '1day_click_user_item_sim', '1day_user_click_num',
                    '1day_item_deg', '1day_user_item_mean_deg', '1day_user_item_min_deg', '1day_user_item_max_deg',
                    '1day_user_item_var_deg', '1day_user_item_median_deg', '1day_user_total_deg', '1day_user_avg_deg',
                    '1day_0_item_deg', '1day_1_item_deg', '1day_top_1_item_deg', '1day_2_item_deg',
