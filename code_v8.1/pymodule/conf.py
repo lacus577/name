@@ -46,6 +46,9 @@ new_embedding_dim = 32
 ''' 留出验证次数 '''
 k = 5
 
+''' 时间区间 '''
+time_periods = [1, 2, 3, 7]
+
 
 ''' -------------------------- constant --------------------------- '''
 train_path = '../../../../data/underexpose_train'
@@ -70,6 +73,7 @@ total_user_recall_path = './cache/features_cache/total_user_recall_500.csv'
 
 ''' 用户画像特征 '''
 user_features_path = './cache/features_cache/user_features.csv'
+user_emb_features_path = './cache/features_cache/user_emb_features.csv'
 
 # 用户点击最大深度
 MAX_CLICK_LEN = 500

@@ -356,6 +356,12 @@ def get_features(df, is_label, type):
         features_columns = pre_columns + recall_columns + part2_columns
     elif type == 3:
         features_columns = pre_columns + recall_columns + part3_columns
+    elif type == 4:
+        features_columns = pre_columns + recall_columns + part2_columns + part3_columns
+    elif type == 5:
+        features_columns = pre_columns + recall_columns + part1_columns + part2_columns
+    elif type == 6:
+        features_columns = pre_columns + recall_columns + part1_columns + part3_columns
     else:
         raise Exception('columns error.')
 

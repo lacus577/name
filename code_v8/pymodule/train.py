@@ -141,7 +141,7 @@ if __name__ == '__main__':
     # 加入user属性 -- ndcg降低1%左右
     # feature_df = feature_df.merge(user_info_df, on='user_id', how='left')
     # 选择特征进行训练
-    feature_df = utils.get_features(feature_df, is_label=1, type=1)
+    feature_df = utils.get_features(feature_df, is_label=1, type=0)
 
     train_auc = valid_auc = 0
     pre_score_arr = np.zeros(5).reshape(-1, )
@@ -250,7 +250,7 @@ if __name__ == '__main__':
                 itemcf_score_maxtrix=item_sim_list, item_info_df=item_info_df, phase=phase
             )
 
-        recall_feature_df = utils.get_features(recall_feature_df, is_label=0, type=1)
+        recall_feature_df = utils.get_features(recall_feature_df, is_label=0, type=0)
 
         submit_x = recall_feature_df[recall_feature_df.columns.difference(['user_id', 'item_id', 'label'])].values
 
