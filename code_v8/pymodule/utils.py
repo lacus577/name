@@ -6,7 +6,7 @@ import numpy as np
 import pickle
 from sklearn.decomposition import PCA
 from sklearn.metrics import roc_auc_score
-import mat
+from matplotlib import pyplot as plt
 from hyperopt import fmin, tpe, hp, space_eval,rand,Trials,partial,STATUS_OK
 
 from pymodule import conf, featuring, rank, eval
@@ -387,18 +387,18 @@ def auto_optim(feature_df, hot_df):
     best = fmin(_get_model, space, algo=rand.suggest, max_evals=10, trials=trials)
     print(best)
 
-    # parameters = ["eta", "min_child_weight", "max_depth", "gamma", "subsample",
-    #               "colsample_bytree", "reg_lambda", "scale_pos_weight", "tree_method", "n_estimators"]
-    # cols = len(parameters)
-    # f, axes = plt.subplots(nrows=1, ncols=cols, figsize=(15, 5))
-    # cmap = plt.cm.jet
-    # for i, val in enumerate(parameters):
-    #     xs = np.array([t['misc']['vals'][val] for t in trials.trials]).ravel()
-    #     ys = [-t['result']['loss'] for t in trials.trials]
-    #     xs, ys = zip(\*sorted(zip(xs, ys)))
-    #     ys = np.array(ys)
-    #     axes[i].scatter(xs, ys, s=20, linewidth=0.01, alpha=0.75, c=cmap(float(i) / len(parameters)))
-    #     axes[i].set_title(val)
+    parameters = ["eta", "min_child_weight", "max_depth", "gamma", "subsample",
+                  "colsample_bytree", "reg_lambda", "scale_pos_weight", "tree_method", "n_estimators"]
+    cols = len(parameters)
+    f, axes = plt.subplots(nrows=1, ncols=cols, figsize=(15, 5))
+    cmap = plt.cm.jet
+    for i, val in enumerate(parameters):
+        xs = np.array([t['misc']['vals'][val] for t in trials.trials]).ravel()
+        ys = [-t['result']['loss'] for t in trials.trials]
+        xs, ys = zip(sorted(zip(xs, ys)))
+        ys = np.array(ys)
+        axes[i].scatter(xs, ys, s=20, linewidth=0.01, alpha=0.75, c=cmap(float(i) / len(parameters)))
+        axes[i].set_title(val)
 
 def _get_space(feature_df, hot_df):
     space = {
@@ -484,9 +484,7 @@ def _get_model(params):
         valid_auc += one_valid_auc
         answer = eval.make_answer(valid_df[valid_df['label'] == 1], hot_df, phase=1)
 
-        print('排序前score:')
         pre_score_arr += eval.my_eval(list(valid_df['sim']), valid_df, answer, print_mark=False)
-        print('排序后score：')
         rank_score_arr += eval.my_eval(pre_y, valid_df, answer, print_mark=False)
 
     avg_valid_auc = valid_auc / conf.k
