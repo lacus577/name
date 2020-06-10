@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.cluster import k_means_
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import AgglomerativeClustering
 
 from pymodule import utils, conf
 
@@ -27,6 +28,15 @@ k_means_.euclidean_distances = euc_dist
 
 scaler = StandardScaler(with_mean=False)
 sparse_data = scaler.fit_transform(item_vec_list)
-kmeans = k_means_.KMeans(n_clusters = cluster_num, n_jobs = 20, random_state = 3425)
-_ = kmeans.fit(sparse_data)
-print(kmeans.labels_)
+
+ac=AgglomerativeClustering(n_clusters=cluster_num,affinity='cosine',linkage='ward')
+labels = ac.fit_predict(sparse_data)
+
+
+# kmeans = k_means_.KMeans(n_clusters = cluster_num, n_jobs = 20, random_state = 3425)
+# _ = kmeans.fit(sparse_data)
+# print(kmeans.labels_)
+# print(kmeans.labels_)
+item_info_df['cluster'] = labels
+item_info_df = item_info_df[['item_id', 'cluster']]
+item_info_df.to_csv('./clustered_item.csv', index=False)
