@@ -137,7 +137,7 @@ def items_recommod_5164_by_cos(user_df, all_click, item_info_df):
     item_info_dict = utils.transfer_item_features_df2dict(item_info_df, conf.new_embedding_dim)
     item_norm2_df = pd.read_csv('./txt_norm2.csv', dtype={'item_id': np.str})
     item_norm2_dict = dict(zip(item_norm2_df['item_id'], item_norm2_df['txt_norm2']))
-    item_cluster = pd.read_csv('./cluster.csv', dtype={'item_id': np.str})
+    item_cluster = pd.read_csv('./clustered_item.csv', dtype={'item_id': np.str})
     # item到cluster倒排表
     item2cluster_dict = dict(zip(item_cluster['item_id'], item_cluster['cluster']))
     # cluster到item倒排表
