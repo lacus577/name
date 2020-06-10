@@ -26,6 +26,9 @@ is_recall_sample_cached = True
 ''' 召回结果特征缓存 '''
 is_recall_feature_cached = True
 
+''' 调参 '''
+is_auto_optim = False
+
 ''' itemcf相似度前k个'''
 itemcf_num = 5
 

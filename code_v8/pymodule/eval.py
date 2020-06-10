@@ -20,7 +20,7 @@ def make_answer(df, hot_df, phase=-1):
     df = df[['phase_id', 'user_id', 'item_id', 'item_deg']]
     return df
 
-def my_eval(pre_y, valid_df, answer, phase=-1):
+def my_eval(pre_y, valid_df, answer, phase=-1, print_mark=True):
     # 构造submit csv
     valid_submit = utils.save_pre_as_submit_format_csv(valid_df, pre_y)
     submit_csv_path = utils.save(valid_submit, file_dir='./cache/tmp_phase_submit')
