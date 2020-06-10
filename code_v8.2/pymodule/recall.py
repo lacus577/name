@@ -173,8 +173,8 @@ def recommend_time_5164_by_cos(item_info_dict, item_norm2_dict, item2cluster_dic
             if item2cluster_dict.get(item) \
                     and item2cluster_dict.get(all_sim_item[i]) \
                     and item2cluster_dict.get(item) == item2cluster_dict.get(all_sim_item[i]):
-                if item_info_dict['txt_vec'].get(item) and item_info_dict['txt_vec'].get(all_sim_item[i]) \
-                        and item_norm2_dict.get(item) and item_norm2_dict.get(all_sim_item[i]):
+                if item_info_dict['txt_vec'].get(item) is not None and item_info_dict['txt_vec'].get(all_sim_item[i]) is not None \
+                        and item_norm2_dict.get(item) is not None and item_norm2_dict.get(all_sim_item[i]) is not None:
                     if all_sim_item[i] not in sim_dict:
                         sim_dict[all_sim_item[i]] = np.dot(item_info_dict['txt_vec'][item], item_info_dict['txt_vec'][all_sim_item[i]]) / \
                                    (item_norm2_dict[item] * item_norm2_dict[all_sim_item[i]])
