@@ -163,7 +163,7 @@ def recommend_time_5164_by_cos(item_info_dict, item_norm2_dict, item2cluster_dic
     interacted_items = set(user_item_df[user_item_df['user_id']==row['user_id']]['item_id'].values)
     for item in interacted_items:
         if item2cluster_dict.get(item) and cluster2item_dict.get(item2cluster_dict[item]):
-            all_sim_item.add(cluster2item_dict.get(item2cluster_dict[item]).split(','))
+            all_sim_item = all_sim_item.union(set(cluster2item_dict.get(item2cluster_dict[item]).split(',')))
     all_sim_item = list(all_sim_item.difference(interacted_items))
     # sim_list = np.zeros(len(all_sim_item))
     sim_dict = {}
