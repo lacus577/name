@@ -520,21 +520,15 @@ def auto_optim(feature_df, hot_df):
     parameters = ["eta", "min_child_weight", "max_depth", "gamma", "subsample",
                   "colsample_bytree", "reg_lambda", "scale_pos_weight", "tree_method", "n_estimators"]
     cols = len(parameters)
-    f, axes = plt.subplots(nrows=1, ncols=cols, figsize=(20, 5))
+    f, axes = plt.subplots(nrows=1, ncols=cols, figsize=(15, 5))
     cmap = plt.cm.jet
     for i, val in enumerate(parameters):
         xs = np.array([t['misc']['vals'][val] for t in trials.trials]).ravel()
         ys = [-t['result']['loss'] for t in trials.trials]
+        xs, ys = zip(sorted(zip(xs, ys)))
         ys = np.array(ys)
-        axes[i].scatter(
-            xs,
-            ys,
-            s=20,
-            linewidth=0.01,
-            alpha=0.5,
-            c=cmap(float(i) / len(parameters)))
+        axes[i].scatter(xs, ys, s=20, linewidth=0.01, alpha=0.75, c=cmap(float(i) / len(parameters)))
         axes[i].set_title(val)
-
     plt.show()
     plt.savefig('./fig.png')
     plt.close()
