@@ -148,6 +148,9 @@ if __name__ == '__main__':
     # 选择特征进行训练
     feature_df = utils.get_features(feature_df, is_label=1, type=1)
 
+    if conf.is_auto_optim:
+        utils.auto_optim(feature_df, hot_df)
+
     train_auc = valid_auc = 0
     pre_score_arr = np.zeros(5).reshape(-1, )
     rank_score_arr = np.zeros(5).reshape(-1, )

@@ -26,6 +26,9 @@ is_recall_sample_cached = True
 ''' 召回结果特征缓存 '''
 is_recall_feature_cached = True
 
+''' 调参 '''
+is_auto_optim = False
+
 ''' itemcf相似度前k个'''
 itemcf_num = 5
 
@@ -44,7 +47,7 @@ org_embedding_dim = 128
 new_embedding_dim = 32
 
 ''' 留出验证次数 '''
-k = 5
+k = 1
 
 ''' 时间区间 '''
 time_periods = [1, 2, 3, 7]

@@ -620,7 +620,7 @@ def cal_click_sim(df, item_user_emb, user_item_emb, process_num, day):
 
     return temp_train_data
 
-def train_test_split(total_features, percentage=0.7):
+def train_test_split(total_features, seed=None, percentage=0.7):
     # 训练集、验证集、提交集划分
     # # todo test集合没用于训练，后续可以考虑加上一起训练
     # train_valid_data = total_features[total_features['train_or_test'] == 'train']
@@ -631,7 +631,7 @@ def train_test_split(total_features, percentage=0.7):
     df_user = pd.DataFrame(list(set(total_features['user_id'])))
     df_user.columns = ['user_id']
 
-    df = df_user.sample(frac=1.0, random_state=None)  # 打散
+    df = df_user.sample(frac=1.0, random_state=seed)  # 打散
 
     cut_idx = int(round(percentage * df.shape[0]))
     df_train_0, df_train_1 = df.iloc[:cut_idx], df.iloc[cut_idx:]

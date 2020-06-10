@@ -24,8 +24,14 @@ def rank_stacking_classifer(X, Y):
 
     return clf
 
-def rank_xgb(X, Y):
-    clf = XGBClassifier(n_jobs=(max(1, cpu_count() - 5)))
+def rank_xgb(X, Y, eta=None, min_child_weight=None, max_depth=None, gamma=None,
+            subsample=None, colsample_bytree=None, reg_lambda=None,
+            scale_pos_weight=None,
+            tree_method=None, n_estimators=None):
+    clf = XGBClassifier(eta=eta, min_child_weight=min_child_weight, max_depth=max_depth, gamma=gamma,
+            subsample=subsample, colsample_bytree=colsample_bytree, reg_lambda=reg_lambda,
+            scale_pos_weight=scale_pos_weight,
+            tree_method=tree_method, n_estimators=n_estimators, n_jobs=(max(1, cpu_count() - 5)))
     clf.fit(X, Y)
 
     return clf

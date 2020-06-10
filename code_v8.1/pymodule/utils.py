@@ -1,11 +1,15 @@
-import os
+import os, time
 from tqdm import tqdm
 
 import pandas as pd
 import numpy as np
+import pickle
 from sklearn.decomposition import PCA
+from sklearn.metrics import roc_auc_score
+from matplotlib import pyplot as plt
+from hyperopt import fmin, tpe, hp, space_eval,rand,Trials,partial,STATUS_OK
 
-from pymodule import conf
+from pymodule import conf, featuring, rank, eval
 
 def sampling_negtive_samples(user_set, negtive_df, sample_num=10):
     features = pd.DataFrame()
@@ -502,3 +506,126 @@ def get_features(df, is_label, type):
         df = df[features_columns]
 
     return df
+
+def auto_optim(feature_df, hot_df):
+    # sapce
+    space = _get_space(feature_df, hot_df)
+    # # algo
+    # algo = partial(rand.suggest, n_startup_jobs=1)
+
+    trials = Trials()
+    best = fmin(_get_model, space, algo=rand.suggest, max_evals=2, trials=trials)
+    print(best)
+
+    parameters = ["eta", "min_child_weight", "max_depth", "gamma", "subsample",
+                  "colsample_bytree", "reg_lambda", "scale_pos_weight", "tree_method", "n_estimators"]
+    cols = len(parameters)
+    f, axes = plt.subplots(nrows=1, ncols=cols, figsize=(15, 5))
+    cmap = plt.cm.jet
+    for i, val in enumerate(parameters):
+        xs = np.array([t['misc']['vals'][val] for t in trials.trials]).ravel()
+        ys = [-t['result']['loss'] for t in trials.trials]
+        xs, ys = zip(sorted(zip(xs, ys)))
+        ys = np.array(ys)
+        axes[i].scatter(xs, ys, s=20, linewidth=0.01, alpha=0.75, c=cmap(float(i) / len(parameters)))
+        axes[i].set_title(val)
+    plt.show()
+    plt.savefig('./fig.png')
+    plt.close()
+
+def _get_space(feature_df, hot_df):
+    space = {
+        "feature": hp.choice('feature', [feature_df]),
+        "hot_df": hp.choice('hot_df', [hot_df]),
+        "eta": hp.choice("eta", [0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.3]),
+        "min_child_weight": hp.choice("min_child_weight", [0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5]),
+        "max_depth": hp.uniform("max_depth", 2, 15),
+        "gamma": hp.choice("gamma", [0, 0.01, 0.02, 0.03, 0.1, 0.2]),
+        "subsample": hp.choice("subsample", [0.5, 0.6, 0.8, 0.9, 1]),
+        "colsample_bytree": hp.choice("colsample_bytree", [0.5, 0.6, 0.8, 0.9, 1]),
+        "reg_lambda": hp.choice("reg_lambda", [0.5, 0.6, 0.8, 0.9, 1]),
+        "scale_pos_weight": hp.uniform("scale_pos_weight", 1, 30),
+        "tree_method": hp.choice("tree_method", ['auto', 'exact']),
+        "n_estimators": hp.uniform("n_estimators", 50, 300)
+     }
+    return space
+
+def _get_model(params):
+    feature_df = params.get("feature")
+    hot_df = params.get("hot_df")
+
+    eta = None
+    if 'eta' in params:
+        eta = params['eta']
+    min_child_weight = None
+    if 'min_child_weight' in params:
+        min_child_weight = params['min_child_weight']
+    max_depth = None
+    if 'max_depth' in params:
+        max_depth = int(params['max_depth'])
+    gamma = None
+    if 'gamma' in params:
+        gamma = params['gamma']
+    subsample = None
+    if 'subsample' in params:
+        subsample = params['subsample']
+    colsample_bytree = None
+    if 'colsample_bytree' in params:
+        colsample_bytree = params['colsample_bytree']
+    reg_lambda = None
+    if 'reg_lambda' in params:
+        reg_lambda = params['reg_lambda']
+    scale_pos_weight = None
+    if 'scale_pos_weight' in params:
+        scale_pos_weight = params['scale_pos_weight']
+    tree_method = None
+    if 'tree_method' in params:
+        tree_method = params['tree_method']
+    n_estimators = None
+    if 'n_estimators' in params:
+        n_estimators = int(params['n_estimators'])
+
+
+    train_auc = valid_auc = 0
+    pre_score_arr = np.zeros(5).reshape(-1, )
+    rank_score_arr = np.zeros(5).reshape(-1, )
+    for i in range(conf.k):
+        ''' 训练集/验证集划分 '''
+        train_df, valid_df = featuring.train_test_split(feature_df, seed=1)
+
+        train_x = train_df[train_df.columns.difference(['user_id', 'item_id', 'label'])].values
+        train_y = train_df['label'].values
+
+        valid_df = valid_df.sort_values('sim').reset_index(drop=True)
+        valid_x = valid_df[valid_df.columns.difference(['user_id', 'item_id', 'label'])].values
+        valid_y = valid_df['label'].values
+
+        ''' 模型训练 '''
+        model = rank.rank_xgb(
+            train_x, train_y,
+            eta=eta, min_child_weight=min_child_weight, max_depth=max_depth, gamma=gamma,
+            subsample=subsample, colsample_bytree=colsample_bytree, reg_lambda=reg_lambda,
+            scale_pos_weight=scale_pos_weight,
+            tree_method=tree_method, n_estimators=n_estimators
+        )
+        one_train_auc = roc_auc_score(train_y, model.predict_proba(train_x)[:, 1])
+        train_auc += one_train_auc
+
+        ''' 模型验证 '''
+        pre_y = model.predict_proba(valid_x)[:, 1]
+        one_valid_auc = roc_auc_score(valid_y, pre_y)
+        valid_auc += one_valid_auc
+        answer = eval.make_answer(valid_df[valid_df['label'] == 1], hot_df, phase=1)
+
+        pre_score_arr += eval.my_eval(list(valid_df['sim']), valid_df, answer, print_mark=False)
+        rank_score_arr += eval.my_eval(pre_y, valid_df, answer, print_mark=False)
+
+    avg_valid_auc = valid_auc / conf.k
+    avg_pre_ndcg = pre_score_arr / conf.k
+    avg_rank_ndcg = rank_score_arr / conf.k
+    diff = avg_rank_ndcg - avg_pre_ndcg
+    print(
+        'avg valid auc:{}, ndcg full gain:{}, ndcg half gain:{}'.format(avg_valid_auc, diff[0], diff[2])
+    )
+
+    return -diff[2]
