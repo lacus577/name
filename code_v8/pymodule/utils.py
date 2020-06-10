@@ -416,7 +416,7 @@ def _get_space(feature_df, hot_df):
         "reg_lambda": hp.choice("reg_lambda", [0.5, 0.6, 0.8, 0.9, 1]),
         "scale_pos_weight": hp.uniform("scale_pos_weight", 1, 30),
         "tree_method": hp.choice("tree_method", ['auto', 'exact']),
-        "n_estimators": hp.uniform("n_estimators", 50, 300),
+        "n_estimators": hp.uniform("n_estimators", 50, 300)
      }
     return space
 
@@ -461,7 +461,7 @@ def _get_model(params):
     rank_score_arr = np.zeros(5).reshape(-1, )
     for i in range(conf.k):
         ''' 训练集/验证集划分 '''
-        train_df, valid_df = featuring.train_test_split(feature_df)
+        train_df, valid_df = featuring.train_test_split(feature_df, seed=1)
 
         train_x = train_df[train_df.columns.difference(['user_id', 'item_id', 'label'])].values
         train_y = train_df['label'].values

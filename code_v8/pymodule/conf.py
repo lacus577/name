@@ -47,7 +47,7 @@ org_embedding_dim = 128
 new_embedding_dim = 32
 
 ''' 留出验证次数 '''
-k = 3
+k = 1
 
 ''' 时间区间 '''
 time_periods = [1, 2, 3, 7]
