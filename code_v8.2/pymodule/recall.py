@@ -141,6 +141,7 @@ def items_recommod_5164_by_cos(user_df, all_click, item_info_df):
     # item到cluster倒排表
     item2cluster_dict = dict(zip(item_cluster['item_id'], item_cluster['cluster']))
     # cluster到item倒排表
+    item_cluster = item_cluster.groupby('cluster').agg({'item_id': lambda x: ','.join(list(x))}).reset_index()
     cluster2item_dict = dict(zip(item_cluster['cluster'], item_cluster['item_id']))
     recom_item, phase_recom_item = [], []
     for i, row in tqdm(user_df.iterrows()):
@@ -162,7 +163,7 @@ def recommend_time_5164_by_cos(item_info_dict, item_norm2_dict, item2cluster_dic
     interacted_items = set(user_item_df[user_item_df['user_id']==row['user_id']]['item_id'].values)
     for item in interacted_items:
         if item2cluster_dict.get(item) and cluster2item_dict.get(item2cluster_dict[item]):
-            all_sim_item.add(cluster2item_dict.get(item2cluster_dict[item]))
+            all_sim_item.add(cluster2item_dict.get(item2cluster_dict[item]).split(','))
     all_sim_item = list(all_sim_item.difference(interacted_items))
     # sim_list = np.zeros(len(all_sim_item))
     sim_dict = {}
@@ -170,15 +171,15 @@ def recommend_time_5164_by_cos(item_info_dict, item_norm2_dict, item2cluster_dic
         count = 0
         for item in interacted_items:
             if item2cluster_dict.get(item) \
-                    and cluster2item_dict.get(item2cluster_dict[item]) \
-                    and all_sim_item[i] in cluster2item_dict.get(item2cluster_dict[item]):
-                if item_info_dict.get(item) and item_info_dict.get(all_sim_item[i]) \
+                    and item2cluster_dict.get(all_sim_item[i]) \
+                    and item2cluster_dict.get(item) == item2cluster_dict.get(all_sim_item[i]):
+                if item_info_dict['txt_vec'].get(item) and item_info_dict['txt_vec'].get(all_sim_item[i]) \
                         and item_norm2_dict.get(item) and item_norm2_dict.get(all_sim_item[i]):
                     if all_sim_item[i] not in sim_dict:
-                        sim_dict[all_sim_item[i]] = np.dot(item_info_dict[item], item_info_dict[all_sim_item[i]]) / \
+                        sim_dict[all_sim_item[i]] = np.dot(item_info_dict['txt_vec'][item], item_info_dict['txt_vec'][all_sim_item[i]]) / \
                                    (item_norm2_dict[item] * item_norm2_dict[all_sim_item[i]])
                     else:
-                        sim_dict[all_sim_item[i]] += np.dot(item_info_dict[item], item_info_dict[all_sim_item[i]]) / \
+                        sim_dict[all_sim_item[i]] += np.dot(item_info_dict['txt_vec'][item], item_info_dict['txt_vec'][all_sim_item[i]]) / \
                                    (item_norm2_dict[item] * item_norm2_dict[all_sim_item[i]])
                     count += 1
 
