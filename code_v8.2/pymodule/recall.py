@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
+from pymodule import utils, conf
+
 recall_num = 500
 
 def recall_5146():
@@ -131,28 +133,59 @@ def items_recommod_5164(click_pred, item_sim_list, whole_click, hot_click):
 
     return recom_item, phase_recom_item
 
-def items_recommod_5164_by_cos(click_pred, item_sim_list, whole_click, hot_click):
+def items_recommod_5164_by_cos(user_df, all_click, item_info_df):
+    item_info_dict = utils.transfer_item_features_df2dict(item_info_df, conf.new_embedding_dim)
+    item_norm2_df = pd.read_csv('./txt_norm2.csv', dtype={'item_id': np.str})
+    item_norm2_dict = dict(zip(item_norm2_df['item_id'], item_norm2_df['txt_norm2']))
+    item_cluster = pd.read_csv('./cluster.csv', dtype={'item_id': np.str})
+    # item到cluster倒排表
+    item2cluster_dict = dict(zip(item_cluster['item_id'], item_cluster['cluster']))
+    # cluster到item倒排表
+    cluster2item_dict = dict(zip(item_cluster['cluster'], item_cluster['item_id']))
     recom_item, phase_recom_item = [], []
-    for i, row in tqdm(click_pred.iterrows()):
-        rank_item, interacted_items = recommend_time_5164(item_sim_list, whole_click, row, 500, 500)
-        #         rank_item = recommend(item_sim_list, user_item, row['user_id'], 500, 500)
-        rank_item = rank_item[:recall_num]
+    for i, row in tqdm(user_df.iterrows()):
+        rank_item, interacted_items = recommend_time_5164_by_cos(item_info_dict, item_norm2_dict, item2cluster_dict, cluster2item_dict, all_click, row)
+        # rank_item = rank_item[:recall_num]
         for j in rank_item:
             recom_item.append([row['user_id'], j[0], j[1]])
             phase_recom_item.append([row['user_id'], j[0], j[1]])
-        hot_cover = 100 - len(rank_item)
-        #         while hot_cover>0:
-        if hot_cover > 0:
-            for hot_index, hot_item in enumerate(hot_click):
-                if hot_item not in interacted_items and hot_item not in [x[0] for x in rank_item]:
-                # if hot_item not in [x[0] for x in rank_item]:
-                    recom_item.append([row['user_id'], hot_item, -1 * hot_index])
-                    phase_recom_item.append([row['user_id'], hot_item, -1 * hot_index])
-                    hot_cover -= 1
-                if hot_cover <= 0:
-                    break
 
     return recom_item, phase_recom_item
+
+def recommend_time_5164_by_cos(item_info_dict, item_norm2_dict, item2cluster_dict, cluster2item_dict, user_item_df, row):
+    '''
+    input:item_sim_list, user_item, uid, 500, 50
+    # 用户历史序列中的所有商品均有关联商品,整合这些关联商品,进行相似性排序
+    '''
+
+    all_sim_item = set()
+    interacted_items = set(user_item_df[user_item_df['user_id']==row['user_id']]['item_id'].values)
+    for item in interacted_items:
+        if item2cluster_dict.get(item) and cluster2item_dict.get(item2cluster_dict[item]):
+            all_sim_item.add(cluster2item_dict.get(item2cluster_dict[item]))
+    all_sim_item = list(all_sim_item.difference(interacted_items))
+    # sim_list = np.zeros(len(all_sim_item))
+    sim_dict = {}
+    for i in tqdm(range(len(all_sim_item))):
+        count = 0
+        for item in interacted_items:
+            if item2cluster_dict.get(item) \
+                    and cluster2item_dict.get(item2cluster_dict[item]) \
+                    and all_sim_item[i] in cluster2item_dict.get(item2cluster_dict[item]):
+                if item_info_dict.get(item) and item_info_dict.get(all_sim_item[i]) \
+                        and item_norm2_dict.get(item) and item_norm2_dict.get(all_sim_item[i]):
+                    if all_sim_item[i] not in sim_dict:
+                        sim_dict[all_sim_item[i]] = np.dot(item_info_dict[item], item_info_dict[all_sim_item[i]]) / \
+                                   (item_norm2_dict[item] * item_norm2_dict[all_sim_item[i]])
+                    else:
+                        sim_dict[all_sim_item[i]] += np.dot(item_info_dict[item], item_info_dict[all_sim_item[i]]) / \
+                                   (item_norm2_dict[item] * item_norm2_dict[all_sim_item[i]])
+                    count += 1
+
+        if count > 0:
+            sim_dict[all_sim_item[i]] /= count
+
+    return sorted(sim_dict.items(), key=lambda d: d[1], reverse=True)[:50], interacted_items
 
 
 def get_sim_item_5164(df_, user_col, item_col, use_iif=False):
