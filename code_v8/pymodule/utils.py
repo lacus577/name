@@ -384,7 +384,7 @@ def auto_optim(feature_df, hot_df):
     # algo = partial(rand.suggest, n_startup_jobs=1)
 
     trials = Trials()
-    best = fmin(_get_model, space, algo=rand.suggest, max_evals=10, trials=trials)
+    best = fmin(_get_model, space, algo=rand.suggest, max_evals=2, trials=trials)
     print(best)
 
     parameters = ["eta", "min_child_weight", "max_depth", "gamma", "subsample",
@@ -399,6 +399,9 @@ def auto_optim(feature_df, hot_df):
         ys = np.array(ys)
         axes[i].scatter(xs, ys, s=20, linewidth=0.01, alpha=0.75, c=cmap(float(i) / len(parameters)))
         axes[i].set_title(val)
+    plt.show()
+    plt.savefig('./fig.png')
+    plt.close()
 
 def _get_space(feature_df, hot_df):
     space = {
