@@ -38,11 +38,12 @@ def my_eval(pre_y, valid_df, answer, phase=-1, print_mark=True):
     hitrate_50_full, hitrate_50_half = evaluate(submit_csv_path, valid_answer_save_path,
                                                 recall_num=None)
 
-    print(
-        'phase:{}, score:{}, ndcg_50_full:{}, ndcg_50_half:{}, hitrate_50_full:{}, hitrate_50_half:{}'.format(
-            phase, score, ndcg_50_full, ndcg_50_half, hitrate_50_full, hitrate_50_half
+    if print_mark:
+        print(
+            'phase:{}, score:{}, ndcg_50_full:{}, ndcg_50_half:{}, hitrate_50_full:{}, hitrate_50_half:{}'.format(
+                phase, score, ndcg_50_full, ndcg_50_half, hitrate_50_full, hitrate_50_half
+            )
         )
-    )
 
     return np.array([score, ndcg_50_full, ndcg_50_half, hitrate_50_full, hitrate_50_half]).reshape(-1, )
 
