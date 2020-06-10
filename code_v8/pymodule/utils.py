@@ -379,11 +379,11 @@ def get_features(df, is_label, type):
 def auto_optim(feature_df, hot_df):
     # sapce
     space = _get_space(feature_df, hot_df)
-    # algo
-    algo = partial(rand.suggest, n_startup_jobs=1)
+    # # algo
+    # algo = partial(rand.suggest, n_startup_jobs=1)
 
     trials = Trials()
-    best = fmin(_get_model, space, algo=algo, max_evals=10, trials=trials)
+    best = fmin(_get_model, space, algo=rand.suggest, max_evals=10, trials=trials)
     print(best)
 
 def _get_space(feature_df, hot_df):
@@ -391,7 +391,7 @@ def _get_space(feature_df, hot_df):
         "feature": hp.choice('feature', [feature_df]),
         "hot_df": hp.choice('hot_df', [hot_df]),
         "eta": hp.choice("eta", [0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.3]),
-        "min_child_weight": hp.choice("min_child_weight", [0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5]),  # [0,1,2,3,4,5] -> [50,]
+        "min_child_weight": hp.choice("min_child_weight", [0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5]),
         "max_depth": hp.uniform("max_depth", 2, 15),
         "gamma": hp.choice("gamma", [0, 0.01, 0.02, 0.03, 0.1, 0.2]),
         "subsample": hp.choice("subsample", [0.5, 0.6, 0.8, 0.9, 1]),
@@ -420,22 +420,22 @@ def _get_model(params):
     if 'gamma' in params:
         gamma = params['gamma']
     subsample = None
-    if 'subsample' is params:
+    if 'subsample' in params:
         subsample = params['subsample']
     colsample_bytree = None
-    if 'colsample_bytree' is params:
+    if 'colsample_bytree' in params:
         colsample_bytree = params['colsample_bytree']
     reg_lambda = None
-    if 'reg_lambda' is params:
+    if 'reg_lambda' in params:
         reg_lambda = params['reg_lambda']
     scale_pos_weight = None
-    if 'scale_pos_weight' is params:
+    if 'scale_pos_weight' in params:
         scale_pos_weight = params['scale_pos_weight']
     tree_method = None
-    if 'tree_method' is params:
+    if 'tree_method' in params:
         tree_method = params['tree_method']
     n_estimators = None
-    if 'n_estimators' is params:
+    if 'n_estimators' in params:
         n_estimators = params['n_estimators']
 
 
