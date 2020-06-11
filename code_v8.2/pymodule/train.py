@@ -146,7 +146,7 @@ if __name__ == '__main__':
     # 加入user属性 -- ndcg降低1%左右
     # feature_df = feature_df.merge(user_info_df, on='user_id', how='left')
     # 选择特征进行训练
-    feature_df = utils.get_features(feature_df, is_label=1, type=1)
+    feature_df = utils.get_features(feature_df, is_label=1, type=0)
 
     if conf.is_auto_optim:
         utils.auto_optim(feature_df, hot_df)
@@ -238,7 +238,7 @@ if __name__ == '__main__':
             # 取前50rank
             one_phase_recall_item_df = \
                 one_phase_recall_item_df.sort_values(['user_id', conf.ITEM_CF_SCORE], ascending=False).reset_index(drop=True)
-            one_phase_recall_item_df = one_phase_recall_item_df.groupby('user_id').head(50).reset_index(drop=True)
+            one_phase_recall_item_df = one_phase_recall_item_df.groupby('user_id').head(60).reset_index(drop=True)
 
             print(one_phase_recall_item_df.shape)
             # sample 构造

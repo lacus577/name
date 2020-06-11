@@ -1,13 +1,13 @@
 ''''''
 ''' -------------------------- conf --------------------------- '''
 ''' 进程并发数 '''
-process_num = 3
+process_num = 30
 
-now_phase = 6
+now_phase = 9
 
 
 ''' 样本采样个数 '''
-subsampling = 3
+subsampling = None
 
 ''' 全量点击序 '''
 is_click_cached = False
@@ -22,9 +22,9 @@ is_feature_cached = False
 ''' 召回结果缓存 '''
 is_recall_cached = True
 ''' 召回结果样本缓存 '''
-is_recall_sample_cached = True
+is_recall_sample_cached = False
 ''' 召回结果特征缓存 '''
-is_recall_feature_cached = True
+is_recall_feature_cached = False
 
 ''' 调参 '''
 is_auto_optim = False
@@ -39,7 +39,7 @@ candidate_positive_num = 3
 negative_num = 15
 
 ''' 召回数量 '''
-recall_num = 50
+recall_num = 60
 
 ''' 官方embedding原始向量维度 '''
 org_embedding_dim = 128
